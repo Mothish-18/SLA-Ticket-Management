@@ -96,6 +96,23 @@ class Ticket(models.Model):
         blank=True
     )
 
+    on_hold_at = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    total_hold_seconds = models.PositiveIntegerField(
+        default=0
+    )
+
+    response_breached = models.BooleanField(
+    default=False
+    )
+
+    resolution_breached = models.BooleanField(
+    default=False
+    )
+
     is_breached = models.BooleanField(
         default=False
     )

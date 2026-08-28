@@ -1,6 +1,5 @@
 from django.contrib import admin
-from .models import *
-
+from .models import SLAPolicy,Ticket,TicketHistory,TicketComment
 
 admin.site.register(SLAPolicy)
 admin.site.register(Ticket)

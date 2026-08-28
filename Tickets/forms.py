@@ -1,5 +1,5 @@
 from django import forms
-from .models import *
+from .models import Ticket,TicketComment
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import *
 
@@ -8,39 +8,19 @@ class TicketForm(forms.ModelForm):
 
     class Meta:
         model = Ticket
-        fields = "__all__"
+        fields = [
+                "title",
+                "description",
+                "priority",
+                "assigned_to",
+            ]
+        widgets ={
 
-        widgets = {
-            "title": forms.TextInput(
-                attrs={
-                    "class": "form-control"
-                }
-            ),
-
-            "description": forms.Textarea(
-                attrs={
-                    "class": "form-control",
-                    "rows": 5
-                }
-            ),
-
-            "priority": forms.Select(
-                attrs={
-                    "class": "form-select"
-                }
-            ),
-
-            "status": forms.Select(
-                attrs={
-                    "class": "form-select"
-                }
-            ),
-
-            "assigned_to": forms.Select(
-                attrs={
-                    "class": "form-select"
-                }
-            ),
+            "title": forms.TextInput(attrs={"class": "form-control"}),
+            "description": forms.Textarea(attrs={"class": "form-control","rows": 5}),
+            "priority": forms.Select(attrs={"class": "form-select"}),
+            "status": forms.Select(attrs={"class": "form-select"}),
+            "assigned_to": forms.Select(attrs={"class": "form-select"}),
         }
 
 
@@ -55,17 +35,8 @@ class TicketUpdateForm(forms.ModelForm):
         ]
 
         widgets = {
-            "status": forms.Select(
-                attrs={
-                    "class": "form-select"
-                }
-            ),
-
-            "assigned_to": forms.Select(
-                attrs={
-                    "class": "form-select"
-                }
-            )
+            "status": forms.Select(attrs={"class": "form-select"}),
+            "assigned_to": forms.Select(attrs={"class": "form-select"}),
         }
 
 
@@ -74,30 +45,16 @@ class TicketCommentForm(forms.ModelForm):
     class Meta:
         model = TicketComment
 
-        fields = [
-            "comment"
-        ]
+        fields = ["comment"]
 
         widgets = {
-            "comment": forms.Textarea(
-                attrs={
-                    "class": "form-control",
-                    "rows": 4,
-                    "placeholder": "Add update notes..."
-                }
-            )
+            "comment": forms.Textarea(attrs={"class": "form-control","rows": 4,"placeholder": "Add update notes..."}),
         }
 
 
 class RegisterForm(UserCreationForm):
 
-    email = forms.EmailField(
-        widget=forms.EmailInput(
-            attrs={
-                "class": "form-control"
-            }
-        )
-    )
+    email = forms.EmailField(widget=forms.EmailInput(attrs={"class": "form-control"}))
 
     class Meta:
         model = User

@@ -10,6 +10,4 @@ def user_role(request):
 
             role = group.name.lower()
 
-    return {
-        'role': role
-    }
+    return {'role': role}

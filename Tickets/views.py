@@ -88,6 +88,22 @@ def dashboard(request):
         status="Closed"
     ).count()
 
+    critical_priority = tickets.filter(
+    priority="Critical"
+    ).count()
+
+    high_priority = tickets.filter(
+        priority="High"
+    ).count()
+
+    medium_priority = tickets.filter(
+        priority="Medium"
+    ).count()
+
+    low_priority = tickets.filter(
+        priority="Low"
+    ).count()
+
     breached_tickets = sum(
         1
         for ticket in tickets
@@ -112,6 +128,10 @@ def dashboard(request):
             "hold_tickets": hold_tickets,
             "resolved_tickets": resolved_tickets,
             "closed_tickets": closed_tickets,
+            "critical_priority": critical_priority,
+            "high_priority": high_priority,
+            "medium_priority": medium_priority,
+            "low_priority": low_priority,
             "breached_tickets": breached_tickets,
             "recent_tickets": recent_tickets,
             "role": role_label,
@@ -125,7 +145,7 @@ def create_ticket(request):
 
     if request.method == 'POST':
 
-        form = TicketForm(request.POST)
+        form = TicketForm(request.POST,user=request.user)
 
         if form.is_valid():
 
@@ -138,6 +158,23 @@ def create_ticket(request):
             )
 
             ticket.save()
+
+            admins = User.objects.filter(
+                groups__name__iexact="Admin"
+            ).distinct()
+
+            for admin in admins:
+
+                Notification.objects.create(
+                    user=admin,
+                    ticket=ticket,
+                    title="New Ticket Created",
+                    message=(
+                        f"Ticket #{ticket.id} "
+                        f"has been created by "
+                        f"{ticket.created_by.username}."
+                    )
+                )
 
             response_due, resolution_due = calculate_sla(
                 ticket,
@@ -153,7 +190,7 @@ def create_ticket(request):
 
     else:
 
-        form = TicketForm()
+        form = TicketForm(user=request.user)
 
     return render(
         request,
@@ -216,8 +253,7 @@ def ticket_detail(request, pk):
 @login_required
 def ticket_list(request):
 
-    user = request.user
-
+    user = request.user 
     user_groups = [
         group.name.lower()
         for group in user.groups.all()
@@ -226,20 +262,30 @@ def ticket_list(request):
     search_query = request.GET.get(
         "search",
         ""
-    )
+    ).strip()
 
     status_filter = request.GET.get(
         "status",
         ""
-    )
+    ).strip().lower()
+
+    priority_filter = request.GET.get(
+        "priority",
+        ""
+    ).strip().lower()
+
+    breached_filter = request.GET.get(
+        "breached",
+        ""
+    ).strip().lower()
 
     if "admin" in user_groups:
 
-        tickets = Ticket.objects.all()
+        base_tickets = Ticket.objects.all()
 
     elif "customer" in user_groups:
 
-        tickets = Ticket.objects.filter(
+        base_tickets = Ticket.objects.filter(
             created_by=user
         )
 
@@ -249,53 +295,115 @@ def ticket_list(request):
         or "support_engineer" in user_groups
     ):
 
-        tickets = Ticket.objects.filter(
+        base_tickets = Ticket.objects.filter(
             Q(assigned_to=user) |
             Q(created_by=user)
         ).distinct()
 
     else:
 
-        tickets = Ticket.objects.none()
+        base_tickets = Ticket.objects.none()
 
-    if status_filter == "open":
+    for ticket in base_tickets:
 
-        tickets = tickets.filter(
-            status="Open"
+        ticket.is_breached = check_sla_breach(
+            ticket
         )
 
-    elif status_filter == "resolved":
+    total_tickets = base_tickets.count()
 
-        tickets = tickets.filter(
-            status="Resolved"
+    open_tickets = base_tickets.filter(
+        status="Open"
+    ).count()
+
+    resolved_tickets = base_tickets.filter(
+        status="Resolved"
+    ).count()
+
+    breached_tickets = sum(
+        1
+        for ticket in base_tickets
+        if ticket.is_breached
+    )
+
+    tickets = base_tickets
+
+    if status_filter:
+
+        status_map = {
+
+            "open": "Open",
+
+            "in progress": "In Progress",
+
+            "in_progress": "In Progress",
+
+            "on hold": "On Hold",
+
+            "on_hold": "On Hold",
+
+            "resolved": "Resolved",
+
+            "closed": "Closed",
+
+        }
+
+        actual_status = status_map.get(
+            status_filter
         )
 
-    elif status_filter == "breached":
+        if actual_status:
 
-        breached_ids = []
+            tickets = tickets.filter(
+                status=actual_status
+            )
 
-        for ticket in tickets:
+    if priority_filter:
 
-            if check_sla_breach(ticket):
+        priority_map = {
 
-                breached_ids.append(
-                    ticket.id
-                )
+            "critical": "Critical",
+
+            "high": "High",
+
+            "medium": "Medium",
+
+            "low": "Low",
+
+        }
+
+        actual_priority = priority_map.get(
+            priority_filter
+        )
+
+        if actual_priority:
+
+            tickets = tickets.filter(
+                priority=actual_priority
+            )
+
+
+    if breached_filter == "true":
+
+        breached_ids = [
+
+            ticket.id
+
+            for ticket in base_tickets
+
+            if ticket.is_breached
+
+        ]
 
         tickets = tickets.filter(
             id__in=breached_ids
         )
 
+
     if search_query:
 
         tickets = tickets.filter(
             title__icontains=search_query
-        )
-
-    for ticket in tickets:
-
-        ticket.is_breached = check_sla_breach(
-            ticket
         )
 
     created_by_me = tickets.filter(
@@ -312,26 +420,36 @@ def ticket_list(request):
         assigned_to=user
     )
 
-    total_tickets = tickets.count()
+    filtered_tickets_count = tickets.count()
 
-    open_tickets = tickets.filter(
-        status="Open"
-    ).count()
 
-    resolved_tickets = tickets.filter(
-        status="Resolved"
-    ).count()
+    if status_filter:
 
-    breached_tickets = sum(
-        1
-        for ticket in tickets
-        if ticket.is_breached
-    )
+        active_filter = status_filter.replace(
+            "_",
+            " "
+        ).title()
+
+    elif priority_filter:
+
+        active_filter = (
+            priority_filter.title()
+            + " Priority"
+        )
+
+    elif breached_filter == "true":
+
+        active_filter = "SLA Breached"
+
+    else:
+
+        active_filter = "All Tickets"
 
     return render(
         request,
         "ticket_list.html",
         {
+
             "tickets": tickets.order_by(
                 "-created_at"
             ),
@@ -348,6 +466,7 @@ def ticket_list(request):
                 "-created_at"
             ),
 
+
             "total_tickets": total_tickets,
 
             "open_tickets": open_tickets,
@@ -356,13 +475,20 @@ def ticket_list(request):
 
             "breached_tickets": breached_tickets,
 
+            "filtered_tickets_count": filtered_tickets_count,
+
             "search_query": search_query,
 
             "status_filter": status_filter,
+
+            "priority_filter": priority_filter,
+
+            "breached_filter": breached_filter,
+
+            "active_filter": active_filter,
+
         }
     )
-
-
 
 @user_passes_test(
     lambda user: is_admin(user) or is_engineer(user)
@@ -370,9 +496,13 @@ def ticket_list(request):
 @login_required
 def update_ticket(request, pk):
 
-    ticket = Ticket.objects.get(pk=pk)
+    ticket = get_object_or_404(
+        Ticket,
+        pk=pk
+    )
 
     old_status = ticket.status
+    old_assigned_to = ticket.assigned_to
 
     if request.method == 'POST':
 
@@ -389,6 +519,22 @@ def update_ticket(request, pk):
 
             updated_ticket = ticket_form.save()
 
+
+            if old_assigned_to != updated_ticket.assigned_to:
+
+                if updated_ticket.assigned_to:
+
+                    Notification.objects.create(
+                        user=updated_ticket.assigned_to,
+                        ticket=updated_ticket,
+                        title="New Ticket Assigned",
+                        message=(
+                            f"Ticket #{updated_ticket.id} "
+                            f"has been assigned to you."
+                        )
+                    )
+
+
             if old_status != updated_ticket.status:
 
                 TicketHistory.objects.create(
@@ -403,6 +549,46 @@ def update_ticket(request, pk):
 
                 )
 
+                if updated_ticket.created_by:
+
+                    if updated_ticket.status == "Resolved":
+
+                        Notification.objects.create(
+                            user=updated_ticket.created_by,
+                            ticket=updated_ticket,
+                            title="Ticket Resolved",
+                            message=(
+                                f"Ticket #{updated_ticket.id} "
+                                f"has been resolved."
+                            )
+                        )
+
+                    elif updated_ticket.status == "Closed":
+
+                        Notification.objects.create(
+                            user=updated_ticket.created_by,
+                            ticket=updated_ticket,
+                            title="Ticket Closed",
+                            message=(
+                                f"Ticket #{updated_ticket.id} "
+                                f"has been closed."
+                            )
+                        )
+
+                    else:
+
+                        Notification.objects.create(
+                            user=updated_ticket.created_by,
+                            ticket=updated_ticket,
+                            title="Ticket Status Updated",
+                            message=(
+                                f"Ticket #{updated_ticket.id} status "
+                                f"changed to {updated_ticket.status}."
+                            )
+                        )
+
+
+
             comment = comment_form.save(
                 commit=False
             )
@@ -414,6 +600,42 @@ def update_ticket(request, pk):
                 comment.user = request.user
 
                 comment.save()
+
+
+                if is_customer(request.user):
+
+                    # Customer commented
+                    # Notify assigned engineer
+
+                    if updated_ticket.assigned_to:
+
+                        Notification.objects.create(
+                            user=updated_ticket.assigned_to,
+                            ticket=updated_ticket,
+                            title="New Customer Comment",
+                            message=(
+                                f"Customer added a comment "
+                                f"to Ticket #{updated_ticket.id}."
+                            )
+                        )
+
+
+                elif is_engineer(request.user):
+
+                    # Engineer commented
+                    # Notify ticket customer
+
+                    if updated_ticket.created_by:
+
+                        Notification.objects.create(
+                            user=updated_ticket.created_by,
+                            ticket=updated_ticket,
+                            title="New Engineer Comment",
+                            message=(
+                                f"Engineer added a comment "
+                                f"to Ticket #{updated_ticket.id}."
+                            )
+                        )
 
             return redirect(
                 'ticket_detail',
@@ -437,7 +659,6 @@ def update_ticket(request, pk):
             'comment_form': comment_form
         }
     )
-
 
 
 def login_view(request):
@@ -555,3 +776,36 @@ def register_view(request):
             'form': form
         }
     )
+
+@login_required
+def notification_click(request, pk):
+
+    notification = get_object_or_404(
+        Notification,
+        pk=pk,
+        user=request.user
+    )
+
+    notification.is_read = True
+    notification.save(update_fields=["is_read"])
+
+    if notification.ticket:
+        return redirect(
+            "ticket_detail",
+            pk=notification.ticket.pk
+        )
+
+    return redirect("dashboard")
+
+@login_required
+def delete_notification(request, pk):
+
+    notification = get_object_or_404(
+        Notification,
+        pk=pk,
+        user=request.user
+    )
+
+    notification.delete()
+
+    return redirect("dashboard")

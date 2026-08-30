@@ -11,5 +11,5 @@ router.register("history",TicketHistoryViewSet,basename="history")
 
 urlpatterns = [
     path("", include(router.urls)),
-    path("dashboard/",DashboardAPIView.as_view(),name="dashboard"),
+    path("dashboard/",DashboardAPIView.as_view(),name="dashboard_api"),
 ]

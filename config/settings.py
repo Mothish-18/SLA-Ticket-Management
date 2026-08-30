@@ -1,14 +1,15 @@
 from pathlib import Path
 from datetime import timedelta
+from decouple import config
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-@9&m@hctpws1-pgob$a@p9zg2@01dwx7mg=je1&o_guq=sm%=-'
+SECRET_KEY = config("SECRET_KEY")
 
-DEBUG = True
+DEBUG = config("DEBUG", default=False, cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["127.0.0.1","localhost",]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -47,6 +48,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
 
                 'Tickets.context_processors.user_role',
+                "Tickets.context_processors.notifications",
             ],
         },
     },
@@ -57,14 +59,13 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME':'SLA_Project_Database',
-        'USER':'root',
-        'PASSWORD':'Ironman@8825',
-        'HOST':'localhost',
-        'PORT':'3306',
+        'NAME': config("DB_NAME"),
+        'USER': config("DB_USER"),
+        'PASSWORD': config("DB_PASSWORD"),
+        'HOST': config("DB_HOST"),
+        'PORT': config("DB_PORT"),
+    }
 }
-}
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -90,9 +91,8 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = 'static/'
-STATICFILES_DIRS = [
-    BASE_DIR / 'static'
-]
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
 
 MAILERS = {
     'default': {
@@ -111,6 +111,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+
     ),
 }
 

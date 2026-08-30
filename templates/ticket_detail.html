@@ -2,71 +2,169 @@
 
 {% block content %}
 
-<!-- Page Header -->
+<div class="container-fluid py-4">
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<!-- ==================================================
+     PAGE HEADER
+================================================== -->
+<div class="d-flex flex-column flex-lg-row
+            justify-content-between align-items-lg-center mb-4">
 
-    <div>
+    <div class="mb-3 mb-lg-0">
 
-        <h2 class="fw-bold mb-1">
-            Ticket Details
-        </h2>
+        <div class="d-flex align-items-center">
 
-        <p class="text-muted mb-0">
-            View complete ticket information
-        </p>
+            <div class="bg-primary bg-opacity-10 rounded-3 p-2 me-3">
+                <i class="bi bi-ticket-detailed-fill text-primary fs-4"></i>
+            </div>
+
+            <div>
+
+                <h2 class="fw-bold mb-1">
+                    Ticket Details
+                </h2>
+
+                <p class="text-muted mb-0">
+                    View ticket information, SLA status, history and comments.
+                </p>
+
+            </div>
+
+        </div>
 
     </div>
+
 
     <a href="{% url 'ticket_list' %}"
        class="btn btn-outline-secondary">
 
-        <i class="bi bi-arrow-left"></i>
+        <i class="bi bi-arrow-left me-2"></i>
         Back to Tickets
 
     </a>
 
 </div>
 
+
+<!-- ==================================================
+     MAIN CONTENT
+================================================== -->
 <div class="row g-4">
 
-    <!-- LEFT SIDE -->
 
-    <div class="col-lg-8">
+    <!-- ==================================================
+         LEFT COLUMN
+    ================================================== -->
+    <div class="col-12 col-xl-8">
 
-        <!-- Ticket Header -->
 
+        <!-- ==================================================
+             TICKET HEADER
+        ================================================== -->
         <div class="card border-0 shadow-sm mb-4">
 
-            <div class="card-body">
+            <div class="card-body p-4">
 
-                <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex flex-column flex-md-row
+                            justify-content-between
+                            align-items-md-start">
 
-                    <div>
+                    <div class="mb-3 mb-md-0">
 
-                        <h3 class="fw-bold mb-1">
+                        <div class="d-flex align-items-center mb-2">
+
+                            <span class="badge bg-light text-dark border me-2">
+                                #{{ ticket.pk }}
+                            </span>
+
+                            {% if ticket.status == "Open" %}
+
+                                <span class="badge bg-primary">
+                                    Open
+                                </span>
+
+                            {% elif ticket.status == "In Progress" %}
+
+                                <span class="badge bg-info text-dark">
+                                    In Progress
+                                </span>
+
+                            {% elif ticket.status == "On Hold" %}
+
+                                <span class="badge bg-warning text-dark">
+                                    On Hold
+                                </span>
+
+                            {% elif ticket.status == "Resolved" %}
+
+                                <span class="badge bg-success">
+                                    Resolved
+                                </span>
+
+                            {% elif ticket.status == "Closed" %}
+
+                                <span class="badge bg-secondary">
+                                    Closed
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge bg-light text-dark border">
+                                    {{ ticket.status }}
+                                </span>
+
+                            {% endif %}
+
+                        </div>
+
+
+                        <h3 class="fw-bold mb-2">
                             {{ ticket.title }}
                         </h3>
 
                         <p class="text-muted mb-0">
-                            Ticket #{{ ticket.pk }}
+
+                            <i class="bi bi-calendar3 me-1"></i>
+
+                            Created
+                            {{ ticket.created_at|date:"d M Y, H:i" }}
+
                         </p>
 
                     </div>
 
+
+                    <!-- Priority -->
+
                     <div>
 
-                        {% if ticket.priority == 'Critical' %}
-                            <span class="badge bg-danger fs-6">Critical</span>
+                        {% if ticket.priority == "Critical" %}
 
-                        {% elif ticket.priority == 'High' %}
-                            <span class="badge bg-warning text-dark fs-6">High</span>
+                            <span class="badge bg-danger fs-6 px-3 py-2">
+                                <i class="bi bi-exclamation-octagon-fill me-1"></i>
+                                Critical
+                            </span>
 
-                        {% elif ticket.priority == 'Medium' %}
-                            <span class="badge bg-info fs-6">Medium</span>
+                        {% elif ticket.priority == "High" %}
+
+                            <span class="badge bg-warning text-dark fs-6 px-3 py-2">
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                High
+                            </span>
+
+                        {% elif ticket.priority == "Medium" %}
+
+                            <span class="badge bg-info text-dark fs-6 px-3 py-2">
+                                <i class="bi bi-dash-circle-fill me-1"></i>
+                                Medium
+                            </span>
 
                         {% else %}
-                            <span class="badge bg-success fs-6">Low</span>
+
+                            <span class="badge bg-success fs-6 px-3 py-2">
+                                <i class="bi bi-arrow-down-circle-fill me-1"></i>
+                                Low
+                            </span>
 
                         {% endif %}
 
@@ -78,73 +176,164 @@
 
         </div>
 
-        <!-- Description -->
 
+        <!-- ==================================================
+             DESCRIPTION
+        ================================================== -->
         <div class="card border-0 shadow-sm mb-4">
 
-            <div class="card-header bg-white">
+            <div class="card-header bg-white border-bottom py-3">
 
-                <h5 class="fw-bold mb-0">
-                    <i class="bi bi-file-text"></i>
-                    Description
-                </h5>
+                <div class="d-flex align-items-center">
+
+                    <div class="bg-primary bg-opacity-10
+                                rounded-3 p-2 me-3">
+
+                        <i class="bi bi-file-earmark-text
+                                  text-primary"></i>
+
+                    </div>
+
+                    <div>
+
+                        <h5 class="fw-bold mb-0">
+                            Description
+                        </h5>
+
+                        <small class="text-muted">
+                            Details provided for this support request
+                        </small>
+
+                    </div>
+
+                </div>
 
             </div>
 
-            <div class="card-body">
 
-                {{ ticket.description }}
+            <div class="card-body p-4">
+
+                {% if ticket.description %}
+
+                    <div class="text-body"
+                         style="white-space: pre-line;">
+
+                        {{ ticket.description }}
+
+                    </div>
+
+                {% else %}
+
+                    <p class="text-muted mb-0">
+                        No description provided.
+                    </p>
+
+                {% endif %}
 
             </div>
 
         </div>
 
-        <!-- Ticket History -->
 
+        <!-- ==================================================
+             TICKET HISTORY
+        ================================================== -->
         <div class="card border-0 shadow-sm mb-4">
 
-            <div class="card-header bg-white">
+            <div class="card-header bg-white border-bottom py-3">
 
-                <h5 class="fw-bold mb-0">
-                    <i class="bi bi-clock-history"></i>
-                    Ticket History
-                </h5>
+                <div class="d-flex align-items-center">
+
+                    <div class="bg-primary bg-opacity-10
+                                rounded-3 p-2 me-3">
+
+                        <i class="bi bi-clock-history
+                                  text-primary"></i>
+
+                    </div>
+
+                    <div>
+
+                        <h5 class="fw-bold mb-0">
+                            Ticket History
+                        </h5>
+
+                        <small class="text-muted">
+                            Status changes and ticket activity
+                        </small>
+
+                    </div>
+
+                </div>
 
             </div>
 
-            <div class="card-body">
+
+            <div class="card-body p-4">
 
                 {% for item in history %}
 
-                    <div class="border-start border-4 border-primary ps-3 mb-4">
+                    <div class="d-flex mb-4">
 
-                        <h6 class="fw-bold">
+                        <div class="me-3">
 
-                            {{ item.old_status }}
+                            <div class="bg-primary bg-opacity-10
+                                        rounded-circle p-2">
 
-                            →
+                                <i class="bi bi-arrow-repeat
+                                          text-primary"></i>
 
-                            {{ item.new_status }}
+                            </div>
 
-                        </h6>
+                        </div>
 
-                        <small class="text-muted">
 
-                            Changed by {{ item.changed_by }}
+                        <div class="flex-grow-1">
 
-                            <br>
+                            <div class="d-flex flex-column
+                                        flex-sm-row
+                                        justify-content-between">
 
-                            {{ item.changed_at }}
+                                <h6 class="fw-bold mb-1">
 
-                        </small>
+                                    {{ item.old_status }}
+
+                                    <i class="bi bi-arrow-right
+                                              mx-1 text-muted"></i>
+
+                                    {{ item.new_status }}
+
+                                </h6>
+
+                                <small class="text-muted">
+                                    {{ item.changed_at|date:"d M Y, H:i" }}
+                                </small>
+
+                            </div>
+
+                            <p class="text-muted small mb-0">
+
+                                Changed by
+                                <span class="fw-semibold">
+                                    {{ item.changed_by }}
+                                </span>
+
+                            </p>
+
+                        </div>
 
                     </div>
 
                 {% empty %}
 
-                    <div class="alert alert-info mb-0">
+                    <div class="text-center py-4">
 
-                        No status changes available.
+                        <i class="bi bi-clock-history
+                                  text-muted fs-2"></i>
+
+                        <p class="text-muted mt-2 mb-0">
+                            No status changes available.
+                        </p>
 
                     </div>
 
@@ -154,42 +343,82 @@
 
         </div>
 
-        <!-- Comments -->
 
+        <!-- ==================================================
+             COMMENTS
+        ================================================== -->
         <div class="card border-0 shadow-sm">
 
-            <div class="card-header bg-white">
+            <div class="card-header bg-white border-bottom py-3">
 
-                <h5 class="fw-bold mb-0">
+                <div class="d-flex align-items-center">
 
-                    <i class="bi bi-chat-left-text"></i>
-                    Comments
+                    <div class="bg-primary bg-opacity-10
+                                rounded-3 p-2 me-3">
 
-                </h5>
+                        <i class="bi bi-chat-left-text
+                                  text-primary"></i>
+
+                    </div>
+
+                    <div>
+
+                        <h5 class="fw-bold mb-0">
+                            Comments
+                        </h5>
+
+                        <small class="text-muted">
+                            Communication related to this ticket
+                        </small>
+
+                    </div>
+
+                </div>
 
             </div>
 
-            <div class="card-body">
+
+            <div class="card-body p-4">
 
                 {% for comment in ticket.comments.all %}
 
-                    <div class="border rounded p-3 mb-3">
+                    <div class="border rounded-3 p-3 mb-3">
 
-                        <div class="d-flex justify-content-between">
+                        <div class="d-flex
+                                    flex-column flex-sm-row
+                                    justify-content-between
+                                    align-items-sm-center mb-2">
 
-                            <strong>
-                                {{ comment.user }}
-                            </strong>
+                            <div class="d-flex align-items-center">
 
-                            <small class="text-muted">
+                                <div class="bg-secondary bg-opacity-10
+                                            rounded-circle p-2 me-2">
 
-                                {{ comment.created_at|date:"d M Y H:i" }}
+                                    <i class="bi bi-person
+                                              text-secondary"></i>
+
+                                </div>
+
+                                <strong>
+                                    {{ comment.user }}
+                                </strong>
+
+                            </div>
+
+
+                            <small class="text-muted mt-2 mt-sm-0">
+
+                                <i class="bi bi-clock me-1"></i>
+
+                                {{ comment.created_at|date:"d M Y, H:i" }}
 
                             </small>
 
                         </div>
 
-                        <p class="mt-2 mb-0">
+
+                        <p class="mb-0 text-body"
+                           style="white-space: pre-line;">
 
                             {{ comment.comment }}
 
@@ -199,11 +428,16 @@
 
                 {% empty %}
 
-                    <p class="text-muted mb-0">
+                    <div class="text-center py-4">
 
-                        No comments available.
+                        <i class="bi bi-chat-left
+                                  text-muted fs-2"></i>
 
-                    </p>
+                        <p class="text-muted mt-2 mb-0">
+                            No comments available.
+                        </p>
+
+                    </div>
 
                 {% endfor %}
 
@@ -213,172 +447,320 @@
 
     </div>
 
-    <!-- RIGHT SIDE -->
 
-    <div class="col-lg-4">
+    <!-- ==================================================
+         RIGHT COLUMN
+    ================================================== -->
+    <div class="col-12 col-xl-4">
 
-        <!-- Action Card -->
 
+        <!-- ==================================================
+             ACTIONS
+        ================================================== -->
         {% if role == "admin" or role == "support engineer" %}
 
+            <div class="card border-0 shadow-sm mb-4">
+
+                <div class="card-body p-4">
+
+                    <h6 class="fw-bold mb-3">
+                        Ticket Actions
+                    </h6>
+
+                    <a href="{% url 'update_ticket' ticket.pk %}"
+                       class="btn btn-warning w-100">
+
+                        <i class="bi bi-pencil-square me-2"></i>
+                        Update Ticket
+
+                    </a>
+
+                </div>
+
+            </div>
+
+        {% endif %}
+
+
+        <!-- ==================================================
+             TICKET INFORMATION
+        ================================================== -->
         <div class="card border-0 shadow-sm mb-4">
 
-            <div class="card-body text-center">
+            <div class="card-header bg-primary text-white py-3">
 
-                <a href="{% url 'update_ticket' ticket.pk %}"
-                   class="btn btn-warning w-100">
+                <div class="d-flex align-items-center">
 
-                    <i class="bi bi-pencil-square"></i>
-                    Update Ticket
+                    <i class="bi bi-info-circle-fill me-2"></i>
 
-                </a>
+                    <h5 class="mb-0 fw-bold">
+                        Ticket Information
+                    </h5>
+
+                </div>
+
+            </div>
+
+
+            <div class="card-body p-4">
+
+
+                <!-- Status -->
+                <div class="mb-4">
+
+                    <small class="text-muted d-block mb-1">
+                        STATUS
+                    </small>
+
+                    {% if ticket.status == "Open" %}
+
+                        <span class="badge bg-primary">
+                            Open
+                        </span>
+
+                    {% elif ticket.status == "In Progress" %}
+
+                        <span class="badge bg-info text-dark">
+                            In Progress
+                        </span>
+
+                    {% elif ticket.status == "On Hold" %}
+
+                        <span class="badge bg-warning text-dark">
+                            On Hold
+                        </span>
+
+                    {% elif ticket.status == "Resolved" %}
+
+                        <span class="badge bg-success">
+                            Resolved
+                        </span>
+
+                    {% elif ticket.status == "Closed" %}
+
+                        <span class="badge bg-secondary">
+                            Closed
+                        </span>
+
+                    {% else %}
+
+                        <span class="badge bg-light text-dark border">
+                            {{ ticket.status }}
+                        </span>
+
+                    {% endif %}
+
+                </div>
+
+
+                <!-- Created By -->
+                <div class="mb-4">
+
+                    <small class="text-muted d-block mb-1">
+                        CREATED BY
+                    </small>
+
+                    <div class="fw-semibold">
+                        <i class="bi bi-person me-2 text-muted"></i>
+                        {{ ticket.created_by }}
+                    </div>
+
+                </div>
+
+
+                <!-- Assigned To -->
+                <div class="mb-4">
+
+                    <small class="text-muted d-block mb-1">
+                        ASSIGNED TO
+                    </small>
+
+                    <div class="fw-semibold">
+
+                        <i class="bi bi-person-check me-2
+                                  text-muted"></i>
+
+                        {% if ticket.assigned_to %}
+                            {{ ticket.assigned_to }}
+                        {% else %}
+                            <span class="text-muted">
+                                Unassigned
+                            </span>
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                <!-- Created At -->
+                <div class="mb-4">
+
+                    <small class="text-muted d-block mb-1">
+                        CREATED AT
+                    </small>
+
+                    <div class="text-muted">
+
+                        <i class="bi bi-calendar3 me-2"></i>
+
+                        {{ ticket.created_at|date:"d M Y, H:i" }}
+
+                    </div>
+
+                </div>
+
+
+                <!-- Updated At -->
+                <div>
+
+                    <small class="text-muted d-block mb-1">
+                        LAST UPDATED
+                    </small>
+
+                    <div class="text-muted">
+
+                        <i class="bi bi-arrow-repeat me-2"></i>
+
+                        {{ ticket.updated_at|date:"d M Y, H:i" }}
+
+                    </div>
+
+                </div>
 
             </div>
 
         </div>
 
-        {% endif %}
 
-<!-- Ticket Information -->
+        <!-- ==================================================
+             SLA INFORMATION
+        ================================================== -->
+        <div class="card border-0 shadow-sm">
 
-<div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-success text-white py-3">
 
-    <div class="card-header bg-primary text-white">
+                <div class="d-flex align-items-center">
 
-        <h5 class="mb-0 fw-bold">
-            Ticket Information
-        </h5>
+                    <i class="bi bi-shield-check me-2"></i>
 
-    </div>
+                    <h5 class="mb-0 fw-bold">
+                        SLA Information
+                    </h5>
 
-    <div class="card-body">
+                </div>
 
-        <div class="mb-3">
+            </div>
 
-            <h6 class="fw-bold mb-1">
-                Status
-            </h6>
 
-            <p class="text-muted mb-0">
-                {{ ticket.status }}
-            </p>
+            <div class="card-body p-4">
 
-        </div>
 
-        <div class="mb-3">
+                <!-- SLA Status -->
+                <div class="mb-4">
 
-            <h6 class="fw-bold mb-1">
-                Created By
-            </h6>
+                    <small class="text-muted d-block mb-2">
+                        SLA STATUS
+                    </small>
 
-            <p class="text-muted mb-0">
-                {{ ticket.created_by }}
-            </p>
+                    {% if ticket.is_breached %}
 
-        </div>
+                        <div class="alert alert-danger
+                                    d-flex align-items-center
+                                    py-2 px-3 mb-0">
 
-        <div class="mb-3">
+                            <i class="bi bi-exclamation-triangle-fill
+                                      me-2"></i>
 
-            <h6 class="fw-bold mb-1">
-                Assigned To
-            </h6>
+                            <strong>
+                                SLA Breached
+                            </strong>
 
-            <p class="text-muted mb-0">
-                {{ ticket.assigned_to }}
-            </p>
+                        </div>
 
-        </div>
+                    {% else %}
 
-        <div class="mb-3">
+                        <div class="alert alert-success
+                                    d-flex align-items-center
+                                    py-2 px-3 mb-0">
 
-            <h6 class="fw-bold mb-1">
-                Created At
-            </h6>
+                            <i class="bi bi-check-circle-fill
+                                      me-2"></i>
 
-            <p class="text-muted mb-0">
-                {{ ticket.created_at }}
-            </p>
+                            <strong>
+                                Within SLA
+                            </strong>
 
-        </div>
+                        </div>
 
-        <div>
+                    {% endif %}
 
-            <h6 class="fw-bold mb-1">
-                Last Updated
-            </h6>
+                </div>
 
-            <p class="text-muted mb-0">
-                {{ ticket.updated_at }}
-            </p>
+
+                <!-- Response Due -->
+                <div class="mb-4">
+
+                    <small class="text-muted d-block mb-1">
+                        RESPONSE DUE
+                    </small>
+
+                    <div class="fw-semibold">
+
+                        <i class="bi bi-reply me-2 text-muted"></i>
+
+                        {% if ticket.response_due_at %}
+
+                            {{ ticket.response_due_at|date:"d M Y, H:i" }}
+
+                        {% else %}
+
+                            <span class="text-muted">
+                                Not Calculated
+                            </span>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                <!-- Resolution Due -->
+                <div>
+
+                    <small class="text-muted d-block mb-1">
+                        RESOLUTION DUE
+                    </small>
+
+                    <div class="fw-semibold">
+
+                        <i class="bi bi-calendar-check me-2
+                                  text-muted"></i>
+
+                        {% if ticket.resolution_due_at %}
+
+                            {{ ticket.resolution_due_at|date:"d M Y, H:i" }}
+
+                        {% else %}
+
+                            <span class="text-muted">
+                                Not Calculated
+                            </span>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
 
         </div>
 
     </div>
 
 </div>
-
-<!-- SLA Information -->
-
-<div class="card border-0 shadow-sm">
-
-    <div class="card-header bg-success text-white">
-
-        <h5 class="mb-0 fw-bold">
-            SLA Information
-        </h5>
-
-    </div>
-
-    <div class="card-body">
-
-        <div class="mb-3">
-
-            <h6 class="fw-bold mb-1">
-                Response Due
-            </h6>
-
-            <p class="text-muted mb-0">
-                {{ ticket.response_due_at|default:"Not Calculated" }}
-            </p>
-
-        </div>
-
-        <div class="mb-3">
-
-            <h6 class="fw-bold mb-1">
-                Resolution Due
-            </h6>
-
-            <p class="text-muted mb-0">
-                {{ ticket.resolution_due_at|default:"Not Calculated" }}
-            </p>
-
-        </div>
-
-        <div>
-
-            <h6 class="fw-bold mb-2">
-                SLA Status
-            </h6>
-
-            {% if ticket.is_breached %}
-
-                <span class="badge bg-danger">
-                    Breached
-                </span>
-
-            {% else %}
-
-                <span class="badge bg-success">
-                    Within SLA
-                </span>
-
-            {% endif %}
-
-        </div>
-
-    </div>
-
 </div>
 
 {% endblock %}

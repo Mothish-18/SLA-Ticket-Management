@@ -14,4 +14,6 @@ urlpatterns=[
     path('login',login_view,name='login'),
     path('logout/',logout_view,name='logout'),
     path('register/',register_view,name='register'),
+    path( 'notifications/<int:pk>/', notification_click, name='notification_click' ),
+    path('notifications/delete/<int:pk>/',delete_notification,name='delete_notification'),
 ]

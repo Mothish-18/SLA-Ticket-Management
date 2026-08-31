@@ -13,6 +13,12 @@ ALLOWED_HOSTS = config(
     "ALLOWED_HOSTS",
     default="127.0.0.1,localhost,sla-ticket-management-production.up.railway.app"
 ).split(",")
+
+CSRF_TRUSTED_ORIGINS = config(
+    "CSRF_TRUSTED_ORIGINS",
+    default="https://sla-ticket-management-production.up.railway.app"
+).split(",")
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',

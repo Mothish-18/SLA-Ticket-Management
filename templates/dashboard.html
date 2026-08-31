@@ -2,615 +2,97 @@
 
 {% block content %}
 
-<div class="container-fluid py-4">
+<style>
+    .sd-card {
+        border: 0;
+        border-radius: 1rem;
+        box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.06);
+    }
 
-<!-- =========================
-     PAGE HEADER
-========================== -->
-<div class="d-flex flex-column flex-lg-row
-            justify-content-between align-items-lg-center mb-4">
+    .sd-hover {
+        transition: all 0.15s ease;
+    }
 
-    <div class="mb-3 mb-lg-0">
+    .sd-hover:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08);
+    }
 
-        <div class="d-flex align-items-center">
+    .sd-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
 
-            <div class="bg-primary bg-opacity-10 rounded-3 p-2 me-3">
-                <i class="bi bi-grid-1x2-fill text-primary fs-4"></i>
-            </div>
+    .sd-breakdown-row {
+        border-radius: 10px;
+        padding: 12px;
+        transition: background-color 0.15s ease;
+    }
+
+    .sd-breakdown-row:hover {
+        background-color: var(--bs-tertiary-bg);
+    }
+
+    .sd-count {
+        min-width: 34px;
+        height: 30px;
+        padding: 0 10px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+
+    .sd-table-title {
+        max-width: 260px;
+    }
+
+    @media (max-width: 1199.98px) {
+        .sd-table-title {
+            max-width: 350px;
+        }
+    }
+</style>
+
+<div class="container-fluid py-3">
+
+<!-- =====================================================
+     HEADER
+====================================================== -->
+
+<div class="card sd-card bg-primary bg-opacity-10 mb-4">
+
+    <div class="card-body p-4">
+
+        <div class="d-flex flex-column flex-lg-row
+                    justify-content-between
+                    align-items-lg-center
+                    gap-3">
 
             <div>
-                <h2 class="fw-bold mb-1">
+
+                <h2 class="fw-semibold mb-1">
                     Welcome, {{ request.user.username }}
                 </h2>
 
-                <p class="text-muted mb-0">
+                <p class="text-secondary mb-0">
                     Monitor tickets, SLA performance, and support activity.
                 </p>
-            </div>
-
-        </div>
-
-    </div>
-
-    <a href="{% url 'create_ticket' %}"
-       class="btn btn-primary px-4">
-
-        <i class="bi bi-plus-circle-fill me-2"></i>
-        Create Ticket
-
-    </a>
-
-</div>
-
-
-<!-- =========================
-     KPI CARDS
-========================== -->
-<div class="row g-4 mb-4">
-
-    <!-- TOTAL TICKETS -->
-    <div class="col-12 col-sm-6 col-xl-3">
-
-        <a href="{% url 'ticket_list' %}"
-           class="text-decoration-none text-dark">
-
-            <div class="card border-0 shadow-sm h-100">
-
-                <div class="card-body p-4">
-
-                    <div class="d-flex justify-content-between align-items-start">
-
-                        <div>
-
-                            <span class="text-muted small fw-semibold">
-                                TOTAL TICKETS
-                            </span>
-
-                            <h2 class="fw-bold mb-1 mt-2">
-                                {{ total_tickets }}
-                            </h2>
-
-                            <small class="text-muted">
-                                All support requests
-                            </small>
-
-                        </div>
-
-                        <div class="bg-primary bg-opacity-10 rounded-3 p-3">
-
-                            <i class="bi bi-ticket-detailed-fill
-                                      text-primary fs-4"></i>
-
-                        </div>
-
-                    </div>
-
-                </div>
 
             </div>
 
-        </a>
-
-    </div>
-
-
-    <!-- OPEN TICKETS -->
-    <div class="col-12 col-sm-6 col-xl-3">
-
-        <a href="{% url 'ticket_list' %}?status=Open"
-           class="text-decoration-none text-dark">
-
-            <div class="card border-0 shadow-sm h-100">
-
-                <div class="card-body p-4">
-
-                    <div class="d-flex justify-content-between align-items-start">
-
-                        <div>
-
-                            <span class="text-muted small fw-semibold">
-                                OPEN TICKETS
-                            </span>
-
-                            <h2 class="fw-bold text-primary mb-1 mt-2">
-                                {{ open_tickets }}
-                            </h2>
-
-                            <small class="text-muted">
-                                Currently requiring attention
-                            </small>
-
-                        </div>
-
-                        <div class="bg-primary bg-opacity-10 rounded-3 p-3">
-
-                            <i class="bi bi-folder2-open
-                                      text-primary fs-4"></i>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </a>
-
-    </div>
-
-
-    <!-- RESOLVED TICKETS -->
-    <div class="col-12 col-sm-6 col-xl-3">
-
-        <a href="{% url 'ticket_list' %}?status=Resolved"
-           class="text-decoration-none text-dark">
-
-            <div class="card border-0 shadow-sm h-100">
-
-                <div class="card-body p-4">
-
-                    <div class="d-flex justify-content-between align-items-start">
-
-                        <div>
-
-                            <span class="text-muted small fw-semibold">
-                                RESOLVED
-                            </span>
-
-                            <h2 class="fw-bold text-success mb-1 mt-2">
-                                {{ resolved_tickets }}
-                            </h2>
-
-                            <small class="text-muted">
-                                Successfully resolved
-                            </small>
-
-                        </div>
-
-                        <div class="bg-success bg-opacity-10 rounded-3 p-3">
-
-                            <i class="bi bi-check-circle-fill
-                                      text-success fs-4"></i>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </a>
-
-    </div>
-
-
-    <!-- SLA BREACHED -->
-    <div class="col-12 col-sm-6 col-xl-3">
-
-        <a href="{% url 'ticket_list' %}?breached=true"
-           class="text-decoration-none text-dark">
-
-            <div class="card border-0 shadow-sm h-100">
-
-                <div class="card-body p-4">
-
-                    <div class="d-flex justify-content-between align-items-start">
-
-                        <div>
-
-                            <span class="text-muted small fw-semibold">
-                                SLA BREACHED
-                            </span>
-
-                            <h2 class="fw-bold text-danger mb-1 mt-2">
-                                {{ breached_tickets }}
-                            </h2>
-
-                            <small class="text-muted">
-                                Tickets exceeding SLA
-                            </small>
-
-                        </div>
-
-                        <div class="bg-danger bg-opacity-10 rounded-3 p-3">
-
-                            <i class="bi bi-exclamation-triangle-fill
-                                      text-danger fs-4"></i>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </a>
-
-    </div>
-
-</div>
-
-
-<!-- =========================
-     STATUS & PRIORITY
-========================== -->
-<div class="row g-4 mb-4">
-
-    <!-- TICKET STATUS -->
-    <div class="col-12 col-xl-6">
-
-        <div class="card border-0 shadow-sm h-100">
-
-            <div class="card-header bg-white border-bottom py-3">
-
-                <div class="d-flex align-items-center">
-
-                    <div class="bg-primary bg-opacity-10 rounded-3 p-2 me-3">
-
-                        <i class="bi bi-bar-chart-fill text-primary"></i>
-
-                    </div>
-
-                    <div>
-
-                        <h5 class="fw-bold mb-0">
-                            Ticket Status
-                        </h5>
-
-                        <small class="text-muted">
-                            Current distribution of tickets
-                        </small>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <div class="card-body p-4">
-
-                <!-- Open -->
-                <a href="{% url 'ticket_list' %}?status=Open"
-                   class="text-decoration-none text-dark">
-
-                    <div class="d-flex justify-content-between
-                                align-items-center mb-3">
-
-                        <div class="d-flex align-items-center">
-
-                            <span class="bg-primary rounded-circle
-                                         d-inline-block me-2"
-                                  style="width:8px;height:8px;">
-                            </span>
-
-                            <span>Open</span>
-
-                        </div>
-
-                        <span class="badge bg-primary bg-opacity-10
-                                     text-primary px-3 py-2">
-                            {{ open_tickets }}
-                        </span>
-
-                    </div>
-
-                </a>
-
-
-                <!-- In Progress -->
-                <a href="{% url 'ticket_list' %}?status=In Progress"
-                   class="text-decoration-none text-dark">
-
-                    <div class="d-flex justify-content-between
-                                align-items-center mb-3">
-
-                        <div class="d-flex align-items-center">
-
-                            <span class="bg-info rounded-circle
-                                         d-inline-block me-2"
-                                  style="width:8px;height:8px;">
-                            </span>
-
-                            <span>In Progress</span>
-
-                        </div>
-
-                        <span class="badge bg-info bg-opacity-10
-                                     text-info px-3 py-2">
-                            {{ progress_tickets }}
-                        </span>
-
-                    </div>
-
-                </a>
-
-
-                <!-- On Hold -->
-                <a href="{% url 'ticket_list' %}?status=On Hold"
-                   class="text-decoration-none text-dark">
-
-                    <div class="d-flex justify-content-between
-                                align-items-center mb-3">
-
-                        <div class="d-flex align-items-center">
-
-                            <span class="bg-warning rounded-circle
-                                         d-inline-block me-2"
-                                  style="width:8px;height:8px;">
-                            </span>
-
-                            <span>On Hold</span>
-
-                        </div>
-
-                        <span class="badge bg-warning bg-opacity-10
-                                     text-warning px-3 py-2">
-                            {{ hold_tickets }}
-                        </span>
-
-                    </div>
-
-                </a>
-
-
-                <!-- Resolved -->
-                <a href="{% url 'ticket_list' %}?status=Resolved"
-                   class="text-decoration-none text-dark">
-
-                    <div class="d-flex justify-content-between
-                                align-items-center mb-3">
-
-                        <div class="d-flex align-items-center">
-
-                            <span class="bg-success rounded-circle
-                                         d-inline-block me-2"
-                                  style="width:8px;height:8px;">
-                            </span>
-
-                            <span>Resolved</span>
-
-                        </div>
-
-                        <span class="badge bg-success bg-opacity-10
-                                     text-success px-3 py-2">
-                            {{ resolved_tickets }}
-                        </span>
-
-                    </div>
-
-                </a>
-
-
-                <!-- Closed -->
-                <a href="{% url 'ticket_list' %}?status=Closed"
-                   class="text-decoration-none text-dark">
-
-                    <div class="d-flex justify-content-between
-                                align-items-center">
-
-                        <div class="d-flex align-items-center">
-
-                            <span class="bg-secondary rounded-circle
-                                         d-inline-block me-2"
-                                  style="width:8px;height:8px;">
-                            </span>
-
-                            <span>Closed</span>
-
-                        </div>
-
-                        <span class="badge bg-secondary bg-opacity-10
-                                     text-secondary px-3 py-2">
-                            {{ closed_tickets }}
-                        </span>
-
-                    </div>
-
-                </a>
-
-            </div>
-
-        </div>
-
-    </div>
-
-
-    <!-- TICKET PRIORITY -->
-    <div class="col-12 col-xl-6">
-
-        <div class="card border-0 shadow-sm h-100">
-
-            <div class="card-header bg-white border-bottom py-3">
-
-                <div class="d-flex align-items-center">
-
-                    <div class="bg-danger bg-opacity-10 rounded-3 p-2 me-3">
-
-                        <i class="bi bi-flag-fill text-danger"></i>
-
-                    </div>
-
-                    <div>
-
-                        <h5 class="fw-bold mb-0">
-                            Ticket Priority
-                        </h5>
-
-                        <small class="text-muted">
-                            Distribution by urgency
-                        </small>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <div class="card-body p-4">
-
-                <!-- Critical -->
-                <a href="{% url 'ticket_list' %}?priority=Critical"
-                   class="text-decoration-none text-dark">
-
-                    <div class="d-flex justify-content-between
-                                align-items-center mb-3">
-
-                        <div class="d-flex align-items-center">
-
-                            <span class="bg-danger rounded-circle
-                                         d-inline-block me-2"
-                                  style="width:8px;height:8px;">
-                            </span>
-
-                            <span>Critical</span>
-
-                        </div>
-
-                        <span class="badge bg-danger bg-opacity-10
-                                     text-danger px-3 py-2">
-                            {{ critical_priority }}
-                        </span>
-
-                    </div>
-
-                </a>
-
-
-                <!-- High -->
-                <a href="{% url 'ticket_list' %}?priority=High"
-                   class="text-decoration-none text-dark">
-
-                    <div class="d-flex justify-content-between
-                                align-items-center mb-3">
-
-                        <div class="d-flex align-items-center">
-
-                            <span class="bg-warning rounded-circle
-                                         d-inline-block me-2"
-                                  style="width:8px;height:8px;">
-                            </span>
-
-                            <span>High</span>
-
-                        </div>
-
-                        <span class="badge bg-warning bg-opacity-10
-                                     text-warning px-3 py-2">
-                            {{ high_priority }}
-                        </span>
-
-                    </div>
-
-                </a>
-
-
-                <!-- Medium -->
-                <a href="{% url 'ticket_list' %}?priority=Medium"
-                   class="text-decoration-none text-dark">
-
-                    <div class="d-flex justify-content-between
-                                align-items-center mb-3">
-
-                        <div class="d-flex align-items-center">
-
-                            <span class="bg-info rounded-circle
-                                         d-inline-block me-2"
-                                  style="width:8px;height:8px;">
-                            </span>
-
-                            <span>Medium</span>
-
-                        </div>
-
-                        <span class="badge bg-info bg-opacity-10
-                                     text-info px-3 py-2">
-                            {{ medium_priority }}
-                        </span>
-
-                    </div>
-
-                </a>
-
-
-                <!-- Low -->
-                <a href="{% url 'ticket_list' %}?priority=Low"
-                   class="text-decoration-none text-dark">
-
-                    <div class="d-flex justify-content-between
-                                align-items-center">
-
-                        <div class="d-flex align-items-center">
-
-                            <span class="bg-success rounded-circle
-                                         d-inline-block me-2"
-                                  style="width:8px;height:8px;">
-                            </span>
-
-                            <span>Low</span>
-
-                        </div>
-
-                        <span class="badge bg-success bg-opacity-10
-                                     text-success px-3 py-2">
-                            {{ low_priority }}
-                        </span>
-
-                    </div>
-
-                </a>
-
-            </div>
-
-        </div>
-
-    </div>
-
-</div>
-
-
-<!-- =========================
-     RECENT TICKETS
-========================== -->
-<div class="card border-0 shadow-sm">
-
-    <div class="card-header bg-white border-bottom py-3">
-
-        <div class="d-flex flex-column flex-sm-row
-                    justify-content-between align-items-sm-center">
-
-            <div class="d-flex align-items-center mb-3 mb-sm-0">
-
-                <div class="bg-primary bg-opacity-10 rounded-3 p-2 me-3">
-
-                    <i class="bi bi-clock-history text-primary"></i>
-
-                </div>
-
-                <div>
-
-                    <h5 class="fw-bold mb-0">
-                        Recent Tickets
-                    </h5>
-
-                    <small class="text-muted">
-                        Latest support activity
-                    </small>
-
-                </div>
-
-            </div>
-
-
-            <a href="{% url 'ticket_list' %}"
-               class="btn btn-sm btn-outline-primary">
-
-                View All
-                <i class="bi bi-arrow-right ms-1"></i>
+            <a href="{% url 'create_ticket' %}"
+               class="btn btn-primary px-4">
+
+                <i class="bi bi-plus-circle me-2"></i>
+                Create Ticket
 
             </a>
 
@@ -618,222 +100,1045 @@
 
     </div>
 
-
-    <!-- TABLE -->
-    <div class="table-responsive">
-
-        <table class="table table-hover align-middle mb-0">
-
-            <thead class="table-light">
-
-                <tr>
-
-                    <th class="ps-4">
-                        ID
-                    </th>
-
-                    <th>
-                        Ticket
-                    </th>
-
-                    <th>
-                        Priority
-                    </th>
-
-                    <th>
-                        Status
-                    </th>
-
-                    <th>
-                        Created
-                    </th>
-
-                    <th class="text-end pe-4">
-                        Action
-                    </th>
-
-                </tr>
-
-            </thead>
+</div>
 
 
-            <tbody>
 
-                {% for ticket in recent_tickets %}
+<!-- =====================================================
+     STAT CARDS
+====================================================== -->
 
-                <tr>
-
-                    <!-- ID -->
-                    <td class="ps-4">
-
-                        <span class="text-muted fw-semibold">
-                            #{{ ticket.id }}
-                        </span>
-
-                    </td>
+<div class="row g-3 mb-4">
 
 
-                    <!-- TITLE -->
-                    <td>
+    <!-- TOTAL -->
 
-                        <a href="{% url 'ticket_detail' ticket.id %}"
-                           class="text-decoration-none fw-semibold">
+    <div class="col-6 col-xl-3">
 
-                            {{ ticket.title }}
+        <a href="{% url 'ticket_list' %}"
+           class="card sd-card sd-hover text-decoration-none text-dark h-100">
 
-                        </a>
+            <div class="card-body p-4">
 
-                        <div class="small text-muted">
-                            Support request
+                <div class="d-flex align-items-center gap-3">
+
+                    <div class="sd-icon bg-secondary bg-opacity-10 text-secondary">
+                        <i class="bi bi-collection"></i>
+                    </div>
+
+                    <div>
+
+                        <div class="text-secondary small">
+                            Total Tickets
                         </div>
 
-                    </td>
+                        <div class="fw-semibold fs-3">
+                            {{ total_tickets }}
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </a>
+
+    </div>
 
 
-                    <!-- PRIORITY -->
-                    <td>
+    <!-- OPEN -->
 
-                        {% if ticket.priority == "Critical" %}
+    <div class="col-6 col-xl-3">
 
-                            <span class="badge bg-danger">
-                                Critical
-                            </span>
+        <a href="{% url 'ticket_list' %}?status=Open"
+           class="card sd-card sd-hover text-decoration-none text-dark h-100">
 
-                        {% elif ticket.priority == "High" %}
+            <div class="card-body p-4">
 
-                            <span class="badge bg-warning text-dark">
-                                High
-                            </span>
+                <div class="d-flex align-items-center gap-3">
 
-                        {% elif ticket.priority == "Medium" %}
+                    <div class="sd-icon bg-primary bg-opacity-10 text-primary">
+                        <i class="bi bi-hourglass-split"></i>
+                    </div>
 
-                            <span class="badge bg-info text-dark">
-                                Medium
-                            </span>
+                    <div>
 
-                        {% else %}
+                        <div class="text-secondary small">
+                            Open
+                        </div>
 
-                            <span class="badge bg-success">
-                                Low
-                            </span>
+                        <div class="fw-semibold fs-3 text-primary">
+                            {{ open_tickets }}
+                        </div>
 
-                        {% endif %}
+                    </div>
 
-                    </td>
+                </div>
+
+            </div>
+
+        </a>
+
+    </div>
 
 
-                    <!-- STATUS -->
-                    <td>
+    <!-- RESOLVED -->
 
-                        {% if ticket.status == "Open" %}
+    <div class="col-6 col-xl-3">
 
-                            <span class="badge bg-primary">
+        <a href="{% url 'ticket_list' %}?status=Resolved"
+           class="card sd-card sd-hover text-decoration-none text-dark h-100">
+
+            <div class="card-body p-4">
+
+                <div class="d-flex align-items-center gap-3">
+
+                    <div class="sd-icon bg-success bg-opacity-10 text-success">
+                        <i class="bi bi-patch-check"></i>
+                    </div>
+
+                    <div>
+
+                        <div class="text-secondary small">
+                            Resolved
+                        </div>
+
+                        <div class="fw-semibold fs-3 text-success">
+                            {{ resolved_tickets }}
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </a>
+
+    </div>
+
+
+    <!-- BREACHED -->
+
+    <div class="col-6 col-xl-3">
+
+        <a href="{% url 'ticket_list' %}?breached=true"
+           class="card sd-card sd-hover text-decoration-none text-dark h-100">
+
+            <div class="card-body p-4">
+
+                <div class="d-flex align-items-center gap-3">
+
+                    <div class="sd-icon bg-danger bg-opacity-10 text-danger">
+                        <i class="bi bi-shield-exclamation"></i>
+                    </div>
+
+                    <div>
+
+                        <div class="text-secondary small">
+                            SLA Breached
+                        </div>
+
+                        <div class="fw-semibold fs-3 text-danger">
+                            {{ breached_tickets }}
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </a>
+
+    </div>
+
+</div>
+
+
+
+<!-- =====================================================
+     MAIN DASHBOARD
+     
+     LEFT  = RECENT TICKETS
+     RIGHT = STATUS + PRIORITY
+====================================================== -->
+
+<div class="row g-4 align-items-start">
+
+
+    <!-- =================================================
+         RECENT TICKETS
+    ================================================== -->
+
+    <div class="col-12 col-xl-8">
+
+        <div class="card sd-card">
+
+
+            <!-- HEADER -->
+
+            <div class="card-header bg-white border-0
+                        rounded-top-4 px-4 pt-4 pb-3">
+
+                <div class="d-flex
+                            flex-column
+                            flex-sm-row
+                            justify-content-between
+                            align-items-sm-center
+                            gap-2">
+
+                    <div>
+
+                        <h5 class="fw-semibold mb-1">
+
+                            <i class="bi bi-clock-history
+                                      text-primary me-2"></i>
+
+                            Recent Tickets
+
+                        </h5>
+
+                        <small class="text-secondary">
+                            Latest support activity
+                        </small>
+
+                    </div>
+
+
+                    <a href="{% url 'ticket_list' %}"
+                       class="btn btn-sm btn-outline-primary">
+
+                        View All
+
+                        <i class="bi bi-arrow-right ms-1"></i>
+
+                    </a>
+
+                </div>
+
+            </div>
+
+
+            <!-- TABLE -->
+
+            <div class="table-responsive">
+
+                <table class="table table-hover
+                              align-middle mb-0">
+
+                    <thead>
+
+                        <tr class="text-secondary small">
+
+                            <th class="ps-4 fw-medium">
+                                ID
+                            </th>
+
+                            <th class="fw-medium">
+                                Ticket
+                            </th>
+
+                            <th class="fw-medium">
+                                Priority
+                            </th>
+
+                            <th class="fw-medium">
+                                Status
+                            </th>
+
+                            <th class="fw-medium">
+                                Created
+                            </th>
+
+                            <th class="text-end pe-4 fw-medium">
+                                Action
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+
+                    {% for ticket in recent_tickets %}
+
+                        <tr>
+
+
+                            <!-- ID -->
+
+                            <td class="ps-4 py-3">
+
+                                <span class="text-secondary fw-semibold">
+                                    #{{ ticket.id }}
+                                </span>
+
+                            </td>
+
+
+                            <!-- TITLE -->
+
+                            <td class="py-3">
+
+                                <a href="{% url 'ticket_detail' ticket.id %}"
+                                   class="text-decoration-none
+                                          fw-semibold
+                                          text-dark
+                                          d-block
+                                          text-truncate
+                                          sd-table-title">
+
+                                    {{ ticket.title }}
+
+                                </a>
+
+                            </td>
+
+
+                            <!-- PRIORITY -->
+
+                            <td class="py-3">
+
+                                {% if ticket.priority == "Critical" %}
+
+                                    <span class="badge rounded-pill
+                                                 text-bg-danger-subtle
+                                                 text-danger-emphasis">
+
+                                        Critical
+
+                                    </span>
+
+                                {% elif ticket.priority == "High" %}
+
+                                    <span class="badge rounded-pill
+                                                 text-bg-warning-subtle
+                                                 text-warning-emphasis">
+
+                                        High
+
+                                    </span>
+
+                                {% elif ticket.priority == "Medium" %}
+
+                                    <span class="badge rounded-pill
+                                                 text-bg-info-subtle
+                                                 text-info-emphasis">
+
+                                        Medium
+
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="badge rounded-pill
+                                                 text-bg-success-subtle
+                                                 text-success-emphasis">
+
+                                        Low
+
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <!-- STATUS -->
+
+                            <td class="py-3">
+
+                                {% if ticket.status == "Open" %}
+
+                                    <span class="badge rounded-pill
+                                                 text-bg-primary-subtle
+                                                 text-primary-emphasis">
+
+                                        Open
+
+                                    </span>
+
+                                {% elif ticket.status == "In Progress" %}
+
+                                    <span class="badge rounded-pill
+                                                 text-bg-info-subtle
+                                                 text-info-emphasis">
+
+                                        In Progress
+
+                                    </span>
+
+                                {% elif ticket.status == "On Hold" %}
+
+                                    <span class="badge rounded-pill
+                                                 text-bg-warning-subtle
+                                                 text-warning-emphasis">
+
+                                        On Hold
+
+                                    </span>
+
+                                {% elif ticket.status == "Resolved" %}
+
+                                    <span class="badge rounded-pill
+                                                 text-bg-success-subtle
+                                                 text-success-emphasis">
+
+                                        Resolved
+
+                                    </span>
+
+                                {% elif ticket.status == "Closed" %}
+
+                                    <span class="badge rounded-pill
+                                                 text-bg-secondary-subtle
+                                                 text-secondary-emphasis">
+
+                                        Closed
+
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="badge rounded-pill
+                                                 border
+                                                 text-secondary">
+
+                                        {{ ticket.status }}
+
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <!-- CREATED -->
+
+                            <td class="py-3">
+
+                                <span class="text-secondary small">
+
+                                    {{ ticket.created_at|date:"d M Y" }}
+
+                                </span>
+
+                            </td>
+
+
+                            <!-- ACTION -->
+
+                            <td class="text-end pe-4 py-3">
+
+                                <a href="{% url 'ticket_detail' ticket.id %}"
+                                   class="btn btn-sm btn-light border"
+                                   title="View Ticket">
+
+                                    <i class="bi bi-eye"></i>
+
+                                </a>
+
+                            </td>
+
+
+                        </tr>
+
+                    {% empty %}
+
+                        <tr>
+
+                            <td colspan="6">
+
+                                <div class="text-center py-5">
+
+                                    <i class="bi bi-ticket-perforated
+                                              text-secondary fs-2
+                                              d-block mb-3"></i>
+
+                                    <h6 class="fw-semibold">
+                                        No Tickets Found
+                                    </h6>
+
+                                    <p class="text-secondary small mb-3">
+                                        There are currently no tickets to display.
+                                    </p>
+
+                                    <a href="{% url 'create_ticket' %}"
+                                       class="btn btn-sm btn-primary">
+
+                                        <i class="bi bi-plus-circle me-1"></i>
+                                        Create First Ticket
+
+                                    </a>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =================================================
+         RIGHT SIDE
+         
+         STATUS
+         PRIORITY
+    ================================================== -->
+
+    <div class="col-12 col-xl-4">
+
+
+        <!-- =============================================
+             STATUS BREAKDOWN
+        ============================================== -->
+
+        <div class="card sd-card mb-4">
+
+
+            <div class="card-header bg-white border-0
+                        rounded-top-4 px-4 pt-4 pb-3">
+
+                <div>
+
+                    <h5 class="fw-semibold mb-1">
+
+                        <i class="bi bi-bar-chart
+                                  text-primary me-2"></i>
+
+                        Status
+
+                    </h5>
+
+                    <small class="text-secondary">
+                        Tickets by current status
+                    </small>
+
+                </div>
+
+            </div>
+
+
+            <div class="card-body px-3 pb-3 pt-1">
+
+
+                <!-- OPEN -->
+
+                <a href="{% url 'ticket_list' %}?status=Open"
+                   class="sd-breakdown-row
+                          text-decoration-none
+                          text-dark
+                          d-flex
+                          align-items-center
+                          justify-content-between
+                          mb-1">
+
+                    <div class="d-flex align-items-center gap-3">
+
+                        <div class="sd-icon
+                                    bg-primary
+                                    bg-opacity-10
+                                    text-primary">
+
+                            <i class="bi bi-hourglass-split"></i>
+
+                        </div>
+
+                        <div>
+
+                            <div class="fw-semibold small">
                                 Open
-                            </span>
+                            </div>
 
-                        {% elif ticket.status == "In Progress" %}
+                            <div class="text-secondary"
+                                 style="font-size: 0.75rem;">
 
-                            <span class="badge bg-info text-dark">
-                                In Progress
-                            </span>
-
-                        {% elif ticket.status == "On Hold" %}
-
-                            <span class="badge bg-warning text-dark">
-                                On Hold
-                            </span>
-
-                        {% elif ticket.status == "Resolved" %}
-
-                            <span class="badge bg-success">
-                                Resolved
-                            </span>
-
-                        {% elif ticket.status == "Closed" %}
-
-                            <span class="badge bg-secondary">
-                                Closed
-                            </span>
-
-                        {% else %}
-
-                            <span class="badge bg-light text-dark border">
-                                {{ ticket.status }}
-                            </span>
-
-                        {% endif %}
-
-                    </td>
-
-
-                    <!-- CREATED -->
-                    <td>
-
-                        <span class="text-muted">
-                            {{ ticket.created_at|date:"d M Y" }}
-                        </span>
-
-                    </td>
-
-
-                    <!-- ACTION -->
-                    <td class="text-end pe-4">
-
-                        <a href="{% url 'ticket_detail' ticket.id %}"
-                           class="btn btn-sm btn-light border"
-                           title="View Ticket">
-
-                            <i class="bi bi-eye"></i>
-
-                        </a>
-
-                    </td>
-
-                </tr>
-
-                {% empty %}
-
-                <tr>
-
-                    <td colspan="6">
-
-                        <div class="text-center py-5">
-
-                            <div class="bg-light rounded-circle
-                                        d-inline-flex p-3 mb-3">
-
-                                <i class="bi bi-ticket-perforated
-                                          text-muted fs-3"></i>
+                                Active tickets
 
                             </div>
 
-                            <h6 class="fw-bold">
-                                No tickets found
-                            </h6>
+                        </div>
 
-                            <p class="text-muted small mb-3">
-                                There are currently no tickets to display.
-                            </p>
+                    </div>
 
-                            <a href="{% url 'create_ticket' %}"
-                               class="btn btn-sm btn-primary">
+                    <span class="sd-count
+                                 bg-primary
+                                 bg-opacity-10
+                                 text-primary">
 
-                                <i class="bi bi-plus-circle me-1"></i>
-                                Create First Ticket
+                        {{ open_tickets }}
 
-                            </a>
+                    </span>
+
+                </a>
+
+
+                <!-- IN PROGRESS -->
+
+                <a href="{% url 'ticket_list' %}?status=In Progress"
+                   class="sd-breakdown-row
+                          text-decoration-none
+                          text-dark
+                          d-flex
+                          align-items-center
+                          justify-content-between
+                          mb-1">
+
+                    <div class="d-flex align-items-center gap-3">
+
+                        <div class="sd-icon
+                                    bg-info
+                                    bg-opacity-10
+                                    text-info">
+
+                            <i class="bi bi-arrow-repeat"></i>
 
                         </div>
 
-                    </td>
+                        <div>
 
-                </tr>
+                            <div class="fw-semibold small">
+                                In Progress
+                            </div>
 
-                {% endfor %}
+                            <div class="text-secondary"
+                                 style="font-size: 0.75rem;">
 
-            </tbody>
+                                Being handled
 
-        </table>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <span class="sd-count
+                                 bg-info
+                                 bg-opacity-10
+                                 text-info">
+
+                        {{ progress_tickets }}
+
+                    </span>
+
+                </a>
+
+
+                <!-- ON HOLD -->
+
+                <a href="{% url 'ticket_list' %}?status=On Hold"
+                   class="sd-breakdown-row
+                          text-decoration-none
+                          text-dark
+                          d-flex
+                          align-items-center
+                          justify-content-between
+                          mb-1">
+
+                    <div class="d-flex align-items-center gap-3">
+
+                        <div class="sd-icon
+                                    bg-warning
+                                    bg-opacity-10
+                                    text-warning">
+
+                            <i class="bi bi-pause-circle"></i>
+
+                        </div>
+
+                        <div>
+
+                            <div class="fw-semibold small">
+                                On Hold
+                            </div>
+
+                            <div class="text-secondary"
+                                 style="font-size: 0.75rem;">
+
+                                Waiting tickets
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <span class="sd-count
+                                 bg-warning
+                                 bg-opacity-10
+                                 text-warning">
+
+                        {{ hold_tickets }}
+
+                    </span>
+
+                </a>
+
+
+                <!-- RESOLVED -->
+
+                <a href="{% url 'ticket_list' %}?status=Resolved"
+                   class="sd-breakdown-row
+                          text-decoration-none
+                          text-dark
+                          d-flex
+                          align-items-center
+                          justify-content-between
+                          mb-1">
+
+                    <div class="d-flex align-items-center gap-3">
+
+                        <div class="sd-icon
+                                    bg-success
+                                    bg-opacity-10
+                                    text-success">
+
+                            <i class="bi bi-check-circle"></i>
+
+                        </div>
+
+                        <div>
+
+                            <div class="fw-semibold small">
+                                Resolved
+                            </div>
+
+                            <div class="text-secondary"
+                                 style="font-size: 0.75rem;">
+
+                                Completed tickets
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <span class="sd-count
+                                 bg-success
+                                 bg-opacity-10
+                                 text-success">
+
+                        {{ resolved_tickets }}
+
+                    </span>
+
+                </a>
+
+
+                <!-- CLOSED -->
+
+                <a href="{% url 'ticket_list' %}?status=Closed"
+                   class="sd-breakdown-row
+                          text-decoration-none
+                          text-dark
+                          d-flex
+                          align-items-center
+                          justify-content-between">
+
+                    <div class="d-flex align-items-center gap-3">
+
+                        <div class="sd-icon
+                                    bg-secondary
+                                    bg-opacity-10
+                                    text-secondary">
+
+                            <i class="bi bi-lock"></i>
+
+                        </div>
+
+                        <div>
+
+                            <div class="fw-semibold small">
+                                Closed
+                            </div>
+
+                            <div class="text-secondary"
+                                 style="font-size: 0.75rem;">
+
+                                Completed and closed
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <span class="sd-count
+                                 bg-secondary
+                                 bg-opacity-10
+                                 text-secondary">
+
+                        {{ closed_tickets }}
+
+                    </span>
+
+                </a>
+
+
+            </div>
+
+        </div>
+
+
+
+        <!-- =============================================
+             PRIORITY BREAKDOWN
+        ============================================== -->
+
+        <div class="card sd-card">
+
+
+            <div class="card-header bg-white border-0
+                        rounded-top-4 px-4 pt-4 pb-3">
+
+                <div>
+
+                    <h5 class="fw-semibold mb-1">
+
+                        <i class="bi bi-flag
+                                  text-primary me-2"></i>
+
+                        Priority
+
+                    </h5>
+
+                    <small class="text-secondary">
+                        Tickets grouped by priority
+                    </small>
+
+                </div>
+
+            </div>
+
+
+            <div class="card-body px-3 pb-3 pt-1">
+
+
+                <!-- CRITICAL -->
+
+                <a href="{% url 'ticket_list' %}?priority=Critical"
+                   class="sd-breakdown-row
+                          text-decoration-none
+                          text-dark
+                          d-flex
+                          align-items-center
+                          justify-content-between
+                          mb-1">
+
+                    <div class="d-flex align-items-center gap-3">
+
+                        <div class="sd-icon
+                                    bg-danger
+                                    bg-opacity-10
+                                    text-danger">
+
+                            <i class="bi bi-exclamation-octagon"></i>
+
+                        </div>
+
+                        <div>
+
+                            <div class="fw-semibold small">
+                                Critical
+                            </div>
+
+                            <div class="text-secondary"
+                                 style="font-size: 0.75rem;">
+
+                                Immediate attention
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <span class="sd-count
+                                 bg-danger
+                                 bg-opacity-10
+                                 text-danger">
+
+                        {{ critical_priority }}
+
+                    </span>
+
+                </a>
+
+
+                <!-- HIGH -->
+
+                <a href="{% url 'ticket_list' %}?priority=High"
+                   class="sd-breakdown-row
+                          text-decoration-none
+                          text-dark
+                          d-flex
+                          align-items-center
+                          justify-content-between
+                          mb-1">
+
+                    <div class="d-flex align-items-center gap-3">
+
+                        <div class="sd-icon
+                                    bg-warning
+                                    bg-opacity-10
+                                    text-warning">
+
+                            <i class="bi bi-exclamation-triangle"></i>
+
+                        </div>
+
+                        <div>
+
+                            <div class="fw-semibold small">
+                                High
+                            </div>
+
+                            <div class="text-secondary"
+                                 style="font-size: 0.75rem;">
+
+                                High priority
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <span class="sd-count
+                                 bg-warning
+                                 bg-opacity-10
+                                 text-warning">
+
+                        {{ high_priority }}
+
+                    </span>
+
+                </a>
+
+
+                <!-- MEDIUM -->
+
+                <a href="{% url 'ticket_list' %}?priority=Medium"
+                   class="sd-breakdown-row
+                          text-decoration-none
+                          text-dark
+                          d-flex
+                          align-items-center
+                          justify-content-between
+                          mb-1">
+
+                    <div class="d-flex align-items-center gap-3">
+
+                        <div class="sd-icon
+                                    bg-info
+                                    bg-opacity-10
+                                    text-info">
+
+                            <i class="bi bi-dash-circle"></i>
+
+                        </div>
+
+                        <div>
+
+                            <div class="fw-semibold small">
+                                Medium
+                            </div>
+
+                            <div class="text-secondary"
+                                 style="font-size: 0.75rem;">
+
+                                Normal priority
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <span class="sd-count
+                                 bg-info
+                                 bg-opacity-10
+                                 text-info">
+
+                        {{ medium_priority }}
+
+                    </span>
+
+                </a>
+
+
+                <!-- LOW -->
+
+                <a href="{% url 'ticket_list' %}?priority=Low"
+                   class="sd-breakdown-row
+                          text-decoration-none
+                          text-dark
+                          d-flex
+                          align-items-center
+                          justify-content-between">
+
+                    <div class="d-flex align-items-center gap-3">
+
+                        <div class="sd-icon
+                                    bg-success
+                                    bg-opacity-10
+                                    text-success">
+
+                            <i class="bi bi-arrow-down-circle"></i>
+
+                        </div>
+
+                        <div>
+
+                            <div class="fw-semibold small">
+                                Low
+                            </div>
+
+                            <div class="text-secondary"
+                                 style="font-size: 0.75rem;">
+
+                                Low priority
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <span class="sd-count
+                                 bg-success
+                                 bg-opacity-10
+                                 text-success">
+
+                        {{ low_priority }}
+
+                    </span>
+
+                </a>
+
+
+            </div>
+
+        </div>
+
 
     </div>
 

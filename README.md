@@ -8,7 +8,7 @@ This project simulates a real-world enterprise ticketing system (similar to Zend
 
 ## Features
 
-- **Role-Based Access Control** — Three distinct roles (Admin, Support Engineer, Customer) with separate dashboards and permissions
+- **Role-Based Access Control** — Three distinct roles (Administrator, Support Engineer, Employee) with separate dashboards and permissions
 - **Ticket Lifecycle Management** — Create, assign, update, and track tickets through Open → In Progress → On Hold → Resolved → Closed
 - **SLA Policy Engine** — Configurable response/resolution time targets per priority level (Low/Medium/High/Critical), with automatic breach detection
 - **Ticket History Tracking** — Full audit trail of every status change, who made it, and when

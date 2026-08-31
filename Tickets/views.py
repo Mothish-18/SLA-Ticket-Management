@@ -1,16 +1,13 @@
-from django.shortcuts import render,redirect,get_object_or_404
-from django.contrib.auth import authenticate,login,logout
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import Group, User
+from django.http import HttpResponseForbidden
 from django.contrib import messages
+from django.db.models import Q
 from .models import *
 from .forms import *
 from .utils import *
-from .services import *
-from django.db.models import *
-from django.contrib.auth.decorators import login_required,user_passes_test
-from django.http import HttpResponseForbidden
-from django.contrib.auth.models import *
-
-from django.db.models import Q
 
 
 
@@ -19,38 +16,21 @@ def dashboard(request):
 
     user = request.user
 
-    user_groups = [
-        group.name.lower()
-        for group in user.groups.all()
-    ]
-
-    if "admin" in user_groups:
+    if is_admin(user):
 
         tickets = Ticket.objects.all()
 
-        role_label = "Admin"
+        role_label = "Administrator"
 
-    elif "customer" in user_groups:
+    elif is_customer(user):
 
-        tickets = Ticket.objects.filter(
-            created_by=user
-        )
+        tickets = Ticket.objects.filter(created_by=user)
 
-        role_label = "Customer"
+        role_label = "Employee"
 
-    elif any(
-        group in user_groups
-        for group in [
-            "engineer",
-            "support engineer",
-            "support_engineer"
-        ]
-    ):
+    elif is_engineer(user):
 
-        tickets = Ticket.objects.filter(
-            Q(assigned_to=user) |
-            Q(created_by=user)
-        ).distinct()
+        tickets = Ticket.objects.filter( Q(assigned_to=user) | Q(created_by=user)).distinct()
 
         role_label = "Support Engineer"
 
@@ -62,65 +42,33 @@ def dashboard(request):
 
     for ticket in tickets:
 
-        ticket.is_breached = check_sla_breach(
-            ticket
-        )
+        ticket.is_breached = check_sla_breach(ticket)
 
     total_tickets = tickets.count()
 
-    open_tickets = tickets.filter(
-        status="Open"
-    ).count()
+    open_tickets = tickets.filter(status="Open").count()
 
-    progress_tickets = tickets.filter(
-        status="In Progress"
-    ).count()
+    progress_tickets = tickets.filter(status="In Progress").count()
 
-    hold_tickets = tickets.filter(
-        status="On Hold"
-    ).count()
+    hold_tickets = tickets.filter(status="On Hold").count()
 
-    resolved_tickets = tickets.filter(
-        status="Resolved"
-    ).count()
+    resolved_tickets = tickets.filter(status="Resolved").count()
 
-    closed_tickets = tickets.filter(
-        status="Closed"
-    ).count()
+    closed_tickets = tickets.filter(status="Closed").count()
 
-    critical_priority = tickets.filter(
-    priority="Critical"
-    ).count()
+    critical_priority = tickets.filter(priority="Critical").count()
 
-    high_priority = tickets.filter(
-        priority="High"
-    ).count()
+    high_priority = tickets.filter(priority="High").count()
 
-    medium_priority = tickets.filter(
-        priority="Medium"
-    ).count()
+    medium_priority = tickets.filter(priority="Medium").count()
 
-    low_priority = tickets.filter(
-        priority="Low"
-    ).count()
+    low_priority = tickets.filter(priority="Low").count()
 
-    breached_tickets = sum(
-        1
-        for ticket in tickets
-        if getattr(
-            ticket,
-            "is_breached",
-            False
-        )
-    )
+    breached_tickets = sum(1 for ticket in tickets if ticket.is_breached)
 
-    recent_tickets = tickets.order_by(
-        "-created_at"
-    )[:5]
+    recent_tickets = tickets.order_by("-created_at")[:5]
 
-    return render(
-        request,
-        "dashboard.html",
+    return render(request,"dashboard.html",
         {
             "total_tickets": total_tickets,
             "open_tickets": open_tickets,
@@ -135,170 +83,117 @@ def dashboard(request):
             "breached_tickets": breached_tickets,
             "recent_tickets": recent_tickets,
             "role": role_label,
-        }
-    )
+        })
 
-
+#-----------------------------------------------------------------------------------------------------------------------------#
 
 @login_required
 def create_ticket(request):
 
-    if request.method == 'POST':
+    user = request.user
 
-        form = TicketForm(request.POST,user=request.user)
+    if request.method == "POST":
+
+        form = TicketForm(request.POST, user=user)
 
         if form.is_valid():
 
             ticket = form.save(commit=False)
+            ticket.created_by = user
 
-            ticket.created_by = request.user
-
-            policy = SLAPolicy.objects.get(
-                priority=ticket.priority
-            )
+            policy = SLAPolicy.objects.get(priority=ticket.priority)
 
             ticket.save()
 
-            admins = User.objects.filter(
-                groups__name__iexact="Admin"
-            ).distinct()
-
-            for admin in admins:
-
-                Notification.objects.create(
-                    user=admin,
-                    ticket=ticket,
-                    title="New Ticket Created",
-                    message=(
-                        f"Ticket #{ticket.id} "
-                        f"has been created by "
-                        f"{ticket.created_by.username}."
-                    )
-                )
-
-            response_due, resolution_due = calculate_sla(
-                ticket,
-                policy
-            )
+            response_due, resolution_due = calculate_sla(ticket, policy)
 
             ticket.response_due_at = response_due
             ticket.resolution_due_at = resolution_due
-
             ticket.save()
 
-            return redirect('ticket_list')
+            if ticket.assigned_to:
+                Notification.objects.create(
+                    user=ticket.assigned_to,
+                    ticket=ticket,
+                    title="New Ticket Assigned",
+                    message=f"Ticket {ticket.id} has been assigned to you.")
+
+            administrators = User.objects.filter(groups__name="Administrator").distinct()
+
+            for administrator in administrators:
+                Notification.objects.create(
+                    user=administrator,
+                    ticket=ticket,
+                    title="New Ticket Created",
+                    message=f"Ticket {ticket.id} has been created by {ticket.created_by.username}.")
+
+            messages.success(request,"Ticket created successfully.")
+
+            return redirect("ticket_list")
 
     else:
+        form = TicketForm(user=user)
 
-        form = TicketForm(user=request.user)
+    return render(request,"create_ticket.html",{"form": form})
 
-    return render(
-        request,
-        'create_ticket.html',
-        {
-            'form': form
-        }
-    )
-
-
+#----------------------------------------------------------------------------------------------------------------------------------#
 
 @login_required
 def ticket_detail(request, pk):
 
-    ticket = get_object_or_404(
-        Ticket,
-        pk=pk
-    )
+    ticket = get_object_or_404(Ticket,pk=pk)
+    user = request.user
 
-    if request.user.groups.filter(
-        name="admin"
-    ).exists():
+    if is_admin(user):
 
         pass
 
-    elif request.user.groups.filter(
-        name="support engineer"
-    ).exists():
+    elif is_engineer(user):
 
-        if ticket.assigned_to != request.user:
+        if (ticket.assigned_to != user and ticket.created_by != user):
 
-            return HttpResponseForbidden(
-                "You are not allowed to view this ticket."
-            )
+            return HttpResponseForbidden("You are not allowed to view this ticket.")
+
+    elif is_customer(user):
+
+        if ticket.created_by != user:
+
+            return HttpResponseForbidden("You are not allowed to view this ticket.")
 
     else:
 
-        if ticket.created_by != request.user:
+        return HttpResponseForbidden("You are not allowed to view this ticket.")
 
-            return HttpResponseForbidden(
-                "You are not allowed to view this ticket."
-            )
+    history = TicketHistory.objects.filter(ticket=ticket).order_by("-changed_at")
 
-    history = TicketHistory.objects.filter(
-        ticket=ticket
-    ).order_by(
-        "-changed_at"
-    )
+    return render(request,"ticket_detail.html",{"ticket": ticket,"history": history})
 
-    return render(
-        request,
-        "ticket_detail.html",
-        {
-            "ticket": ticket,
-            "history": history
-        }
-    )
-
+#------------------------------------------------------------------------------------------------------------------------------#
 
 @login_required
 def ticket_list(request):
 
-    user = request.user 
-    user_groups = [
-        group.name.lower()
-        for group in user.groups.all()
-    ]
+    user = request.user
 
-    search_query = request.GET.get(
-        "search",
-        ""
-    ).strip()
+    search_query = request.GET.get("search","").strip()
 
-    status_filter = request.GET.get(
-        "status",
-        ""
-    ).strip().lower()
+    status_filter = request.GET.get("status","").strip().lower()
 
-    priority_filter = request.GET.get(
-        "priority",
-        ""
-    ).strip().lower()
+    priority_filter = request.GET.get("priority","").strip().lower()
 
-    breached_filter = request.GET.get(
-        "breached",
-        ""
-    ).strip().lower()
+    breached_filter = request.GET.get("breached","").strip().lower()
 
-    if "admin" in user_groups:
+    if is_admin(user):
 
         base_tickets = Ticket.objects.all()
 
-    elif "customer" in user_groups:
+    elif is_customer(user):
 
-        base_tickets = Ticket.objects.filter(
-            created_by=user
-        )
+        base_tickets = Ticket.objects.filter(created_by=user)
 
-    elif (
-        "engineer" in user_groups
-        or "support engineer" in user_groups
-        or "support_engineer" in user_groups
-    ):
+    elif is_engineer(user):
 
-        base_tickets = Ticket.objects.filter(
-            Q(assigned_to=user) |
-            Q(created_by=user)
-        ).distinct()
+        base_tickets = Ticket.objects.filter( Q(assigned_to=user) | Q(created_by=user)).distinct()
 
     else:
 
@@ -306,25 +201,15 @@ def ticket_list(request):
 
     for ticket in base_tickets:
 
-        ticket.is_breached = check_sla_breach(
-            ticket
-        )
+        ticket.is_breached = check_sla_breach(ticket)
 
     total_tickets = base_tickets.count()
 
-    open_tickets = base_tickets.filter(
-        status="Open"
-    ).count()
+    open_tickets = base_tickets.filter(status="Open").count()
 
-    resolved_tickets = base_tickets.filter(
-        status="Resolved"
-    ).count()
+    resolved_tickets = base_tickets.filter(status="Resolved").count()
 
-    breached_tickets = sum(
-        1
-        for ticket in base_tickets
-        if ticket.is_breached
-    )
+    breached_tickets = sum( 1 for ticket in base_tickets  if ticket.is_breached)
 
     tickets = base_tickets
 
@@ -348,15 +233,11 @@ def ticket_list(request):
 
         }
 
-        actual_status = status_map.get(
-            status_filter
-        )
+        actual_status = status_map.get(status_filter)
 
         if actual_status:
 
-            tickets = tickets.filter(
-                status=actual_status
-            )
+            tickets = tickets.filter(status=actual_status)
 
     if priority_filter:
 
@@ -372,70 +253,37 @@ def ticket_list(request):
 
         }
 
-        actual_priority = priority_map.get(
-            priority_filter
-        )
+        actual_priority = priority_map.get(priority_filter)
 
         if actual_priority:
 
-            tickets = tickets.filter(
-                priority=actual_priority
-            )
-
+            tickets = tickets.filter(priority=actual_priority)
 
     if breached_filter == "true":
 
-        breached_ids = [
+        breached_ids = [ticket.id for ticket in base_tickets if ticket.is_breached ]
 
-            ticket.id
-
-            for ticket in base_tickets
-
-            if ticket.is_breached
-
-        ]
-
-        tickets = tickets.filter(
-            id__in=breached_ids
-        )
-
+        tickets = tickets.filter(id__in=breached_ids)
 
     if search_query:
 
-        tickets = tickets.filter(
-            title__icontains=search_query
-        )
+        tickets = tickets.filter(title__icontains=search_query)
 
-    created_by_me = tickets.filter(
-        created_by=user
-    )
+    created_by_me = tickets.filter(created_by=user)
 
-    assigned_to_me = tickets.filter(
-        assigned_to=user
-    )
+    assigned_to_me = tickets.filter(assigned_to=user) 
 
-    other_tickets = tickets.exclude(
-        created_by=user
-    ).exclude(
-        assigned_to=user
-    )
+    other_tickets = tickets.exclude(created_by=user).exclude(assigned_to=user)
 
     filtered_tickets_count = tickets.count()
 
-
     if status_filter:
 
-        active_filter = status_filter.replace(
-            "_",
-            " "
-        ).title()
+        active_filter = status_filter.replace("_", " ").title()
 
     elif priority_filter:
 
-        active_filter = (
-            priority_filter.title()
-            + " Priority"
-        )
+        active_filter = (priority_filter.title() + " Priority")
 
     elif breached_filter == "true":
 
@@ -445,27 +293,16 @@ def ticket_list(request):
 
         active_filter = "All Tickets"
 
-    return render(
-        request,
-        "ticket_list.html",
+    return render(request,"ticket_list.html",
         {
 
-            "tickets": tickets.order_by(
-                "-created_at"
-            ),
+            "tickets": tickets.order_by("-created_at"),
 
-            "created_by_me": created_by_me.order_by(
-                "-created_at"
-            ),
+            "created_by_me": created_by_me.order_by("-created_at"),
 
-            "assigned_to_me": assigned_to_me.order_by(
-                "-created_at"
-            ),
+            "assigned_to_me": assigned_to_me.order_by("-created_at"),
 
-            "other_tickets": other_tickets.order_by(
-                "-created_at"
-            ),
-
+            "other_tickets": other_tickets.order_by("-created_at"),
 
             "total_tickets": total_tickets,
 
@@ -487,325 +324,244 @@ def ticket_list(request):
 
             "active_filter": active_filter,
 
-        }
-    )
+        })
 
-@user_passes_test(
-    lambda user: is_admin(user) or is_engineer(user)
-)
+#------------------------------------------------------------------------------------------------------------------------------------------------#
+
 @login_required
 def update_ticket(request, pk):
 
-    ticket = get_object_or_404(
-        Ticket,
-        pk=pk
-    )
+    ticket = get_object_or_404(Ticket, pk=pk)
+    user= request.user
+
+    if is_admin(user):
+
+        pass
+
+    elif is_engineer(user):
+
+        if ticket.assigned_to != user:
+            return HttpResponseForbidden("You can only update tickets assigned to you.")
+        
+    else:
+        return HttpResponseForbidden("You are not allowed to update tickets.")
 
     old_status = ticket.status
     old_assigned_to = ticket.assigned_to
 
-    if request.method == 'POST':
+    if request.method == "POST":
 
-        ticket_form = TicketUpdateForm(
-            request.POST,
-            instance=ticket
-        )
+        ticket_form = TicketUpdateForm(request.POST,instance=ticket)
 
-        comment_form = TicketCommentForm(
-            request.POST
-        )
+        comment_form = TicketCommentForm(request.POST)
 
         if ticket_form.is_valid() and comment_form.is_valid():
 
             updated_ticket = ticket_form.save()
 
-
             if old_assigned_to != updated_ticket.assigned_to:
 
-                if updated_ticket.assigned_to:
+                if old_assigned_to:
+                    Notification.objects.create(
+                        user=old_assigned_to,
+                        ticket=updated_ticket,
+                        title="Ticket Reassigned",
+                        message=(f"Ticket {updated_ticket.id} " f"has been reassigned to another engineer."))
 
+                if updated_ticket.assigned_to:
                     Notification.objects.create(
                         user=updated_ticket.assigned_to,
                         ticket=updated_ticket,
                         title="New Ticket Assigned",
-                        message=(
-                            f"Ticket #{updated_ticket.id} "
-                            f"has been assigned to you."
-                        )
-                    )
-
+                        message=(f"Ticket {updated_ticket.id} " f"has been assigned to you."))
 
             if old_status != updated_ticket.status:
 
                 TicketHistory.objects.create(
-
                     ticket=updated_ticket,
-
                     old_status=old_status,
-
                     new_status=updated_ticket.status,
-
                     changed_by=request.user
-
                 )
 
-                if updated_ticket.created_by:
+                if updated_ticket.status == "Resolved":
 
-                    if updated_ticket.status == "Resolved":
+                    administrators = User.objects.filter(groups__name="Administrator").distinct()
 
+                    for administrator in administrators:
                         Notification.objects.create(
-                            user=updated_ticket.created_by,
+                            user=administrator,
                             ticket=updated_ticket,
                             title="Ticket Resolved",
-                            message=(
-                                f"Ticket #{updated_ticket.id} "
-                                f"has been resolved."
-                            )
-                        )
+                            message=(f"Ticket {updated_ticket.id} " f"has been resolved by " f"{request.user.username}."))
 
-                    elif updated_ticket.status == "Closed":
+                    Notification.objects.create(
+                        user=updated_ticket.created_by,
+                        ticket=updated_ticket,
+                        title="Ticket Resolved",
+                        message=(f"Ticket {updated_ticket.id} " f"has been resolved."))
+            
+                elif updated_ticket.status == "Closed":
 
+                    administrators = User.objects.filter(groups__name="Administrator").distinct()
+
+                    for administrator in administrators:
                         Notification.objects.create(
-                            user=updated_ticket.created_by,
+                            user=administrator,
                             ticket=updated_ticket,
                             title="Ticket Closed",
-                            message=(
-                                f"Ticket #{updated_ticket.id} "
-                                f"has been closed."
-                            )
-                        )
+                            message=(f"Ticket {updated_ticket.id} " f"has been closed by " f"{request.user.username}."))
 
-                    else:
+                    Notification.objects.create(
+                        user=updated_ticket.created_by,
+                        ticket=updated_ticket,
+                        title="Ticket Closed",
+                        message=(f"Ticket {updated_ticket.id} " f"has been closed."))
 
-                        Notification.objects.create(
-                            user=updated_ticket.created_by,
-                            ticket=updated_ticket,
-                            title="Ticket Status Updated",
-                            message=(
-                                f"Ticket #{updated_ticket.id} status "
-                                f"changed to {updated_ticket.status}."
-                            )
-                        )
+                else:
+                    Notification.objects.create(
+                        user=updated_ticket.created_by,
+                        ticket=updated_ticket,
+                        title="Ticket Status Updated",
+                        message=(f"Ticket {updated_ticket.id} status " f"changed to {updated_ticket.status}."))
 
-
-
-            comment = comment_form.save(
-                commit=False
-            )
+            comment = comment_form.save(commit=False)
 
             if comment.comment:
-
                 comment.ticket = updated_ticket
-
                 comment.user = request.user
-
                 comment.save()
-
 
                 if is_customer(request.user):
 
-                    # Customer commented
-                    # Notify assigned engineer
-
                     if updated_ticket.assigned_to:
-
                         Notification.objects.create(
                             user=updated_ticket.assigned_to,
                             ticket=updated_ticket,
-                            title="New Customer Comment",
-                            message=(
-                                f"Customer added a comment "
-                                f"to Ticket #{updated_ticket.id}."
-                            )
-                        )
-
+                            title="New Employee Comment",
+                            message=(f"Employee added a comment " f"to Ticket {updated_ticket.id}."))
 
                 elif is_engineer(request.user):
 
-                    # Engineer commented
-                    # Notify ticket customer
-
                     if updated_ticket.created_by:
-
                         Notification.objects.create(
                             user=updated_ticket.created_by,
                             ticket=updated_ticket,
                             title="New Engineer Comment",
-                            message=(
-                                f"Engineer added a comment "
-                                f"to Ticket #{updated_ticket.id}."
-                            )
-                        )
-
-            return redirect(
-                'ticket_detail',
-                pk=ticket.pk
-            )
+                            message=(f"Support Engineer added a comment " f"to Ticket {updated_ticket.id}."))
+                        
+            messages.success(request, f"Ticket {updated_ticket.id} updated successfully.")
+            return redirect("ticket_detail",pk=ticket.pk)
 
     else:
-
-        ticket_form = TicketUpdateForm(
-            instance=ticket
-        )
+        ticket_form = TicketUpdateForm(instance=ticket)
 
         comment_form = TicketCommentForm()
 
-    return render(
-        request,
-        'update_ticket.html',
-        {
-            'ticket': ticket,
-            'ticket_form': ticket_form,
-            'comment_form': comment_form
-        }
-    )
+    return render(request, "update_ticket.html",{ "ticket": ticket, "ticket_form": ticket_form, "comment_form": comment_form})
 
+#--------------------------------------------------------------------------------------------------------------------------------------------------------#
 
 def login_view(request):
 
     if request.user.is_authenticated:
 
-        return redirect('dashboard')
+        return redirect("dashboard")
 
     if request.method == "POST":
 
-        username = request.POST.get('username')
+        username = request.POST.get("username")
 
-        password = request.POST.get('password')
+        password = request.POST.get("password")
 
-        user = authenticate(
-
-            request,
-
-            username=username,
-
-            password=password
-
-        )
+        user = authenticate(request, username=username, password=password)
 
         if user is not None:
 
-            login(
+            login(request,user)
 
-                request,
-
-                user
-
-            )
-
-            return redirect('dashboard')
+            return redirect("dashboard")
 
         else:
 
-            messages.error(
+            messages.error(request, "Invalid username or password.")
 
-                request,
+    return render(request, "login.html")
 
-                "Invalid username or password."
-
-            )
-
-    return render(
-
-        request,
-
-        'login.html'
-
-    )
-
+#--------------------------------------------------------------------------------------------------------------------#
 
 def logout_view(request):
 
     logout(request)
 
-    return redirect('login')
+    return redirect("login")
+
+#----------------------------------------------------------------------------------------------------------------------#
 
 def is_admin(user):
 
-    return user.groups.filter(
-        name='Admin'
-    ).exists()
-
+    return user.groups.filter(name="Administrator").exists()
 
 def is_engineer(user):
 
-    return user.groups.filter(
-        name='Support Engineer'
-    ).exists()
-
+    return user.groups.filter(name="Support Engineer").exists()
 
 def is_customer(user):
 
-    return user.groups.filter(
-        name='Customer'
-    ).exists()
+    return user.groups.filter(name="Employee").exists()
 
+#----------------------------------------------------------------------------------------------------------------------#
 
 def register_view(request):
 
-    if request.method == 'POST':
+    if request.method == "POST":
 
-        form = RegisterForm(
-            request.POST
-        )
+        form = RegisterForm(request.POST)
 
         if form.is_valid():
 
             user = form.save()
 
-            customer_group = Group.objects.get(
-                name='customer'
-            )
+            employee_group = Group.objects.get(name="Employee")
 
-            user.groups.add(
-                customer_group
-            )
+            user.groups.add(employee_group)
 
-            return redirect(
-                'login'
-            )
+            messages.success(request, "Registration successful. Please login.")
+
+            return redirect("login")
 
     else:
 
         form = RegisterForm()
 
-    return render(
-        request,
-        'register.html',
-        {
-            'form': form
-        }
-    )
+    return render(request,"register.html",{"form": form})
+
+#----------------------------------------------------------------------------------------------------------------------#
 
 @login_required
 def notification_click(request, pk):
 
-    notification = get_object_or_404(
-        Notification,
-        pk=pk,
-        user=request.user
-    )
+    notification = get_object_or_404(Notification, pk=pk, user=request.user)
 
     notification.is_read = True
+
     notification.save(update_fields=["is_read"])
 
     if notification.ticket:
-        return redirect(
-            "ticket_detail",
-            pk=notification.ticket.pk
-        )
+
+        return redirect("ticket_detail",pk=notification.ticket.pk)
 
     return redirect("dashboard")
+
+#----------------------------------------------------------------------------------------------------------------------#
 
 @login_required
 def delete_notification(request, pk):
 
-    notification = get_object_or_404(
-        Notification,
-        pk=pk,
-        user=request.user
-    )
+    notification = get_object_or_404(Notification,pk=pk,user=request.user)
 
     notification.delete()
 
     return redirect("dashboard")
+
+#----------------------------------------------------------------------------------------------------------------------#

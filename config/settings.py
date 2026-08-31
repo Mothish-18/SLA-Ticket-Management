@@ -9,8 +9,10 @@ SECRET_KEY = config("SECRET_KEY")
 
 DEBUG = config("DEBUG", default=False, cast=bool)
 
-ALLOWED_HOSTS = config("ALLOWED_HOSTS",default="127.0.0.1,localhost").split(",")
-
+ALLOWED_HOSTS = config(
+    "ALLOWED_HOSTS",
+    default="127.0.0.1,localhost,sla-ticket-management-production.up.railway.app"
+).split(",")
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',

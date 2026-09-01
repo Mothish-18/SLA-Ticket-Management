@@ -24,24 +24,30 @@ This project simulates a real-world enterprise ticketing system (similar to Zend
 - **Database:** MySQL
 - **API:** Django REST Framework, Simple JWT
 - **Frontend:** Django Templates, HTML/CSS
+- **Static files:** WhiteNoise
+- **App server:** Gunicorn
+- **Hosting:** Railway
 
 ## Project Structure
 
+```
 SLA_Ticket_Management/
-├── config/ # Project settings, URLs, WSGI/ASGI
+├── config/                 # Project settings, URLs, WSGI/ASGI
 ├── Tickets/
-│ ├── models.py # Ticket, SLAPolicy, TicketHistory, TicketComment, Notification
-│ ├── views.py # Dashboard, ticket CRUD, auth views
-│ ├── forms.py
-│ ├── services.py # SLA breach calculation logic
-│ ├── utils.py
-│ ├── context_processors.py
-│ └── API/ # DRF viewsets, serializers, permissions
-├── templates/ # HTML templates
+│   ├── models.py            # Ticket, SLAPolicy, TicketHistory, TicketComment, Notification
+│   ├── views.py              # Dashboard, ticket CRUD, auth views
+│   ├── forms.py
+│   ├── utils.py
+│   ├── context_processors.py
+│   └── API/                  # DRF viewsets, serializers, permissions
+├── templates/               # HTML templates
+├── staticfiles/              # Collected static files (generated)
+├── Procfile                  # Railway/Heroku-style start command
+├── requirements.txt
 └── manage.py
+```
 
-
-## Getting Started
+## Getting Started (Local Development)
 
 ### Prerequisites
 - Python 3.10+
@@ -50,60 +56,60 @@ SLA_Ticket_Management/
 ### Installation
 
 1. **Clone the repository**
-```bash
+   ```bash
    git clone https://github.com/Mothish-18/SLA-Ticket-Management.git
    cd SLA-Ticket-Management
-```
+   ```
 
 2. **Create and activate a virtual environment**
-```bash
+   ```bash
    python -m venv venv
    source venv/bin/activate   # On Windows: venv\Scripts\activate
-```
+   ```
 
 3. **Install dependencies**
-```bash
+   ```bash
    pip install -r requirements.txt
-```
+   ```
 
 4. **Set up environment variables**
 
    Create a `.env` file in the project root:
-
+   ```
    SECRET_KEY=your-secret-key-here
-    DEBUG=True
-    DB_NAME=SLA_Project_Database
-    DB_USER=root
-    DB_PASSWORD=your-db-password
-    DB_HOST=localhost
-    DB_PORT=3306
-
+   DEBUG=True
+   ALLOWED_HOSTS=127.0.0.1,localhost
+   DB_NAME=SLA_Project_Database
+   DB_USER=root
+   DB_PASSWORD=your-db-password
+   DB_HOST=localhost
+   DB_PORT=3306
+   ```
 
 5. **Create the MySQL database**
-```sql
+   ```sql
    CREATE DATABASE SLA_Project_Database;
-```
+   ```
 
 6. **Run migrations**
-```bash
+   ```bash
    python manage.py migrate
-```
+   ```
 
 7. **Create user groups** (via Django admin or shell)
-   - Admin
+   - Administator
    - Support Engineer
-   - Customer
+   - Employee
 
 8. **Create a superuser**
-```bash
+   ```bash
    python manage.py createsuperuser
-```
+   ```
 
 9. **Run the development server**
-```bash
+   ```bash
    python manage.py runserver
-```
-
+   ```
    Visit `http://127.0.0.1:8000`
 
 ## API Endpoints
@@ -116,6 +122,37 @@ SLA_Ticket_Management/
 | `GET/POST /api/comments/` | List/create comments |
 | `GET /api/history/` | Ticket status change history |
 | `GET /api/dashboard/` | Dashboard summary stats |
+
+## Deploying to Railway
+
+1. **Push the project to GitHub** (make sure `.env`, `venv/`, and `staticfiles/` stay out of the repo — they're already in `.gitignore`).
+2. **Create a new Railway project** → *Deploy from GitHub repo*.
+3. **Add a MySQL database** from Railway's plugin marketplace, or point `DB_HOST`/`DB_PORT`/etc. to an external MySQL instance.
+4. **Set environment variables** on the Railway service (Settings → Variables):
+   ```
+   SECRET_KEY=<a-long-random-value>
+   DEBUG=False
+   ALLOWED_HOSTS=<your-service-name>.up.railway.app
+   CSRF_TRUSTED_ORIGINS=https://<your-service-name>.up.railway.app
+   DB_NAME=...
+   DB_USER=...
+   DB_PASSWORD=...
+   DB_HOST=...
+   DB_PORT=...
+   ```
+5. **Start command** (`Procfile`, included in this repo):
+   ```
+   web: python manage.py migrate && python manage.py collectstatic --noinput && gunicorn config.wsgi --workers 1 --threads 2 --timeout 60 --max-requests 500 --max-requests-jitter 50
+   ```
+6. Railway will build with Nixpacks automatically since `requirements.txt` is present.
+
+### ⚠️ Important: set `DEBUG=False` in production
+
+`DEBUG=True` makes Django keep every SQL query it runs in memory for the lifetime of the process (`connection.queries`), and disables template/static caching. On a long-running server this causes memory to climb continuously — which matches "RAM keeps increasing" behavior. **This is almost always the first fix to try.** It's also a security risk in production (stack traces expose your secret key and DB credentials to visitors on error pages).
+
+## Keeping This Live for Free on Railway
+
+See the memory-optimization steps below — the short version is: `DEBUG=False`, one Gunicorn worker with a couple of threads, and worker recycling via `--max-requests`.
 
 ## Roadmap / Future Improvements
 

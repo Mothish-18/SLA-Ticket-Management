@@ -1,0 +1,1 @@
+web: python manage.py migrate --noinput && python manage.py collectstatic --noinput && gunicorn config.wsgi --workers 1 --threads 2 --timeout 60 --max-requests 500 --max-requests-jitter 50 --log-file -
